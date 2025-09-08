@@ -1,6 +1,7 @@
 
 #include "generalIncludes.h"
 #include <chrono>
+#include <string>
 #include "Instrumentor.h"
 #include "absl/hash/hash.h"
 #include "absl/container/flat_hash_set.h"
@@ -10,10 +11,12 @@
 const int N_PLAYERS=5;
 const int ROTATION_SIZE=3;
 
+const std::string TEST_FILE_DIR = "../../../../assets/CorrettoOlly.csv";
+
 void main1() {
 
     SetConsoleOutputCP(CP_UTF8); //changing windows console decoding to utf8
-    CSVRows rows = readCSV("D:/VSCodeScripts/D/CorrettoOlly.csv");
+    CSVRows rows = readCSV(TEST_FILE_DIR);
     PlayerList player_list = formatRowsToPlayerList(rows);
     int n_teams = static_cast<int>(player_list.size() / N_PLAYERS);
     std::unordered_map<BaseID, Player> player_dict;
@@ -63,7 +66,7 @@ void main1() {
 void main2() {
 
     SetConsoleOutputCP(CP_UTF8); //changing windows console decoding to utf8
-    CSVRows rows = readCSV("D:/VSCodeScripts/D/CorrettoOlly.csv");
+    CSVRows rows = readCSV(TEST_FILE_DIR);
     PlayerList player_list = formatRowsToPlayerList(rows);
     int n_teams = static_cast<int>(player_list.size() / N_PLAYERS);
     std::unordered_map<BaseID, Player> player_dict;
