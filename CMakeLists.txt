@@ -5,12 +5,15 @@ project(my_project)
 set(CMAKE_CXX_STANDARD 20)
 
 # Process Abseil's CMake build system
-add_subdirectory(abseil-cpp)
+add_subdirectory(libs/abseil-cpp)
+
+set(my_includes_dir src/includes)
+set(my_impl_dir src)
 
 add_executable(main 
-main_noiaFattaBene.cpp
-matricesModule.cpp
-core.cpp)
+${my_impl_dir}/main_noiaFattaBene.cpp
+${my_impl_dir}/matricesModule.cpp
+${my_impl_dir}/core.cpp)
 
 
 target_compile_definitions(main 
@@ -19,7 +22,7 @@ $<$<CONFIG:Debug>:MIO_DEBUG>
 $<$<CONFIG:Release>:MIO_RELEASE>
 )
 
-target_include_directories(main PRIVATE .)
+target_include_directories(main PRIVATE ${my_includes_dir} libs)
 
 # Declare dependency on the absl::strings library
 target_link_libraries(main absl::flat_hash_set absl::hash absl::btree)
