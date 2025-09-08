@@ -1,0 +1,6 @@
+Bisogna creare un metodo di hashing per MovesSet
+Per farlo si può usare la strategia di combine hashes di boost sugli
+elementi dell'array delle mosse.
+Per farlo Bisogna prima creare una funzione di hashing simile per
+il pair teamid-rank.
+cambiare in flat_hash_set perché la std lib l'ha implementata di merda..
