@@ -6,10 +6,10 @@
 #include <algorithm>
 #include <array>
 #include <format>
-#include "myMacros.h"
+#include "macros/myMacros.h"
 #include "absl/container/flat_hash_set.h"
 
-struct ValuedSet{
+struct ValuedConfigSet{
     ConfigSet set;
     float quality;
 };
@@ -19,10 +19,10 @@ using MarkedTConfigSet= std::vector<const TeamSet*>;
 template<int n_threads=1>
 struct MapForThreadMoles{
     ThreadSafeUnorderedSet<ConfigSet, VisitedConfigSetHash> visited_configs;
-    std::array<ValuedSet, n_threads> valued_sets_per_process;
-    std::array<ValuedSet, n_threads>& valued_sets_pp=valued_sets_per_process;
+    std::array<ValuedConfigSet, n_threads> valued_sets_per_process;
+    std::array<ValuedConfigSet, n_threads>& valued_sets_pp=valued_sets_per_process;
     MapForThreadMoles(){
-        for(ValuedSet& val_set: valued_sets_pp){
+        for(ValuedConfigSet& val_set: valued_sets_pp){
             val_set.quality=10.0;
         }
     }
@@ -182,7 +182,7 @@ ConfigSet findOptimalTeamConfigViaRotationsMultiThreaded(ConfigMatrix& orig_conf
     return *std::min_element(
         map_for_moles.valued_sets_pp.begin(),
         map_for_moles.valued_sets_pp.end(),
-        [](const ValuedSet& set1, const ValuedSet& set2){
+        [](const ValuedConfigSet& set1, const ValuedConfigSet& set2){
             return set1.quality<set2.quality;
         }
     );

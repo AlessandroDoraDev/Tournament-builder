@@ -8,7 +8,7 @@ set(CMAKE_CXX_STANDARD 20)
 add_subdirectory(libs/abseil-cpp)
 
 set(my_includes_dir src/includes)
-set(my_impl_dir src)
+set(my_impl_dir src/implementation)
 
 add_executable(main 
 ${my_impl_dir}/main_noiaFattaBene.cpp

@@ -2,7 +2,7 @@
 #include "generalIncludes.h"
 #include <chrono>
 #include <string>
-#include "Instrumentor.h"
+#include "profiling/Instrumentor.h"
 #include "absl/hash/hash.h"
 #include "absl/container/flat_hash_set.h"
 #include "absl/container/btree_set.h"
