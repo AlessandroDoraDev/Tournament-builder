@@ -1,6 +1,6 @@
 #pragma once
 #include "TeamForMoveGen.h"
-#include "matricesModule.h"
+#include "less/TeamSetLess.h"
 
 struct TeamForMoveGenLess{
     bool operator()(TeamForMoveGen*& g1, TeamForMoveGen*& g2){

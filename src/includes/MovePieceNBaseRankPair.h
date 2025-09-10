@@ -1,6 +1,6 @@
 #pragma once
 #include <utility>
-#include "matricesModule.h"
+#include "BaseRank.h"
 
 
 using MovePieceNBaseRankPair=std::pair<uint8_t, BaseRank>;

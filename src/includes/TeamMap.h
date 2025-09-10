@@ -1,5 +1,5 @@
 #pragma once
-#include "matricesModule.h"
 #include <map>
+#include <Rank.h>
 
 using TeamMap= std::map<Rank, int>;

@@ -1,7 +1,6 @@
 #pragma once
-#include <unordered_map>
-#include "Rank.h"
-#include <string>
+#include "globals.h"
+
 
 const std::unordered_map<std::string, Rank> STRING_RANK_TO_ENUM_MAP={
     {"Empty", Rank::Empty},

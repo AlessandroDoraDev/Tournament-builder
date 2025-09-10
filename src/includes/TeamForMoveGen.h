@@ -1,6 +1,6 @@
 #pragma once
 #include "TeamMap.h"
-#include "matricesModule.h"
+#include "TeamSet.h"
 
 struct TeamForMoveGen{
     int mark;

@@ -1,5 +1,5 @@
 #pragma once
 #include <utility>
-#include "matricesModule.h"
+#include "Rank.h"
 
 using MovePieceNRankPair=std::pair<uint8_t, Rank>;

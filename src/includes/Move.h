@@ -1,6 +1,6 @@
 #pragma once
 #include <utility>
-#include "matricesModule.h"
+#include "ConfigSet.h"
 #include "MovePieceNBaseRankPair.h"
 #include "MovePieceNRankPair.h"
 #include "MoveArrT.h"

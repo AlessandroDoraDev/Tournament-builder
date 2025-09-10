@@ -1,4 +1,4 @@
 #pragma once
-#include <type_traits.h>
+#include <cstdint>
 
 using BaseRank = uint8_t;

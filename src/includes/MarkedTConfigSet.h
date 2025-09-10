@@ -1,5 +1,5 @@
 #pragma once
-#include "matricesModule.h"
+#include "TeamSet.h"
 #include <vector>
 
 using MarkedTConfigSet= std::vector<const TeamSet*>;

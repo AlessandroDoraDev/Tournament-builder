@@ -13,7 +13,12 @@ set(my_impl_dir src/implementation)
 add_executable(main 
 ${my_impl_dir}/main_noiaFattaBene.cpp
 ${my_impl_dir}/matricesModule.cpp
-${my_impl_dir}/core.cpp)
+${my_impl_dir}/core.cpp
+${my_impl_dir}/globals.cpp
+${my_impl_dir}/less/IDRankPairLess.cpp
+${my_impl_dir}/less/RankLess.cpp
+${my_impl_dir}/less/TeamSetLess.cpp
+${my_impl_dir}/hash/VisitedConfigSetHash.cpp)
 
 
 target_compile_definitions(main 

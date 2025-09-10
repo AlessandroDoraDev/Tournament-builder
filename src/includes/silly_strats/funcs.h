@@ -10,9 +10,13 @@
 #include <thread>
 #include <utility>
 #include <ranges>
-#include "matricesModule.h"
-#include "core.h"
+#include <format>
+#include <random>
+#include <mutex>
+#include "ConfigMatrix.h"
 #include "CircularRangeView.h"
+#include "macros/myMacros.h"
+#include "matricesModule.h"
 
 std::string formatDurationDetailed(std::chrono::nanoseconds ns) {
     using namespace std::chrono;

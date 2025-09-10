@@ -1,44 +1,10 @@
 #include "matricesModule.h"
+#include "globals.h"
 #include <fstream>
 #include <sstream>
 #include <ranges>
 #include <functional>
 #include <algorithm>
-
-bool IDRankPairLess::operator()(const IDRankPair& pair, const IDRankPair& pair2) const{
-    return pair.second<pair2.second;
-}
-
-bool TeamSetLess::operator()(const TeamSet& team_set, const TeamSet& team_set2) const{
-    std::string team1, team2;
-    team1.resize(N_PLAYERS);
-    team2.resize(N_PLAYERS);
-    auto push_casted_rank_lambda = [](const Rank& rank) {return static_cast<char>(rank); };
-    std::transform(team_set.begin(), team_set.end(), team1.begin(),
-        push_casted_rank_lambda);
-    std::transform(team_set.begin(), team_set.end(), team2.begin(),
-        push_casted_rank_lambda);
-    return team1<team2;
-}
-
-bool TeamSetLess::operator()(const TeamSet*& team_set, const TeamSet*& team_set2) const{
-    return TeamSetLess{}(*team_set, *team_set2);
-}
-
-bool RankLess::operator()(const Rank& rank, const Rank& rank2) const{
-    return rank<rank2;
-}
-
-
-size_t VisitedConfigSetHash::operator()(const ConfigSet& config_set) const{
-    std::string stringification;
-    for(const TeamSet& team: config_set){
-        std::transform(team.begin(), team.end(), std::back_inserter(stringification),
-            [](const Rank& rank) { return static_cast<char>(static_cast<BaseRank>(rank) + '0'); });
-    }
-    std::hash<std::string> hasher;
-    return hasher(stringification);
-}
 
 
 CSVRows readCSV(const std::string& filename) {

@@ -1,33 +1,21 @@
 #pragma once
-#include "matricesModule.h"
-#include "threadSafeTools.h"
 #include <map>
 #include <initializer_list>
 #include <algorithm>
 #include <array>
 #include <format>
+#include "ConfigSet.h"
+#include "ConfigMatrix.h"
+#include "MovesSet.h"
+#include "VisitedConfigSet.h"
+#include "ConfigForMoveGen.h"
+#include "MarkedTConfigSet.h"
 #include "macros/myMacros.h"
+#include "MapForThreadMoles.h"
+#include "less/MovesSetLess.h"
 #include "absl/container/flat_hash_set.h"
-
-struct ValuedConfigSet{
-    ConfigSet set;
-    float quality;
-};
-
-using MarkedTConfigSet= std::vector<const TeamSet*>;
-
-template<int n_threads=1>
-struct MapForThreadMoles{
-    ThreadSafeUnorderedSet<ConfigSet, VisitedConfigSetHash> visited_configs;
-    std::array<ValuedConfigSet, n_threads> valued_sets_per_process;
-    std::array<ValuedConfigSet, n_threads>& valued_sets_pp=valued_sets_per_process;
-    MapForThreadMoles(){
-        for(ValuedConfigSet& val_set: valued_sets_pp){
-            val_set.quality=10.0;
-        }
-    }
-};
-
+#include "matricesModule.h"
+#include "globals.h"
 
 // def truncate_dict(d:dict, max_items=3):
 
@@ -38,84 +26,12 @@ struct MapForThreadMoles{
 // def config_set_quality(config_set: frozenset)-> float:
 
 // def find_optimal_team_config_recursive(orig_config_set: frozenset, orig_config_quality: float, rotation_size: int, visited_configs: ThreadSafeList, possible_moves:frozenset, best_quality:int, pid: int= 0)-> tuple[frozenset, float]:
-using MovePieceNRankPair=std::pair<uint8_t, Rank>;
-using MovePieceNBaseRankPair=std::pair<uint8_t, BaseRank>;
-
-template<int rotation_size=2>
-using MoveArrT= std::array<MovePieceNBaseRankPair, rotation_size>;
-
-
-template<int rotation_size=2>
-class Move{
-public:
-    Move(){}
-    explicit Move(MoveArrT<rotation_size>&& moves): m_move(std::move(moves)){}
-    Move(std::initializer_list<MovePieceNBaseRankPair> moves): m_move(std::move(moves)){}
-    Move(std::initializer_list<MovePieceNRankPair> moves){
-        int i=0;
-        for(const MovePieceNRankPair& r: moves){
-            m_move[i]={r.first, static_cast<BaseRank>(r.second)};
-            i++;
-        }
-    }
-    ConfigSet operator()(const ConfigSet&) const;
-    
-    template <typename H>
-    friend H AbslHashValue(H h, const Move<rotation_size>& m) {
-        return H::combine(std::move(h), m.m_move);
-    }
-
-    friend bool operator==(const Move<rotation_size>& m1, const Move<rotation_size>& m2) {
-        return m1.m_move == m2.m_move;
-    }
-
-
-    operator std::string() const{
-        std::string out="(";
-        for (const MovePieceNBaseRankPair& move_piece : m_move) {
-            out += std::format("({}, {})", move_piece.first, move_piece.second);
-        }
-        return out+")";
-    }
-
-    bool less(const Move<rotation_size>& m) const;
-    //size_t hash(const Move<rotation_size>& m) const;
-public:
-    MoveArrT<rotation_size> m_move;
-};
-
-
-template<int rotation_size=2>
-struct MovesSetLess{
-    bool operator()(const Move<rotation_size>& m1, const Move<rotation_size>& m2) const;
-};
-
-template<int rotation_size=2>
-using MovesSet = absl::flat_hash_set<Move<rotation_size>>;
-
 
 template<int n_threads=1>
 ConfigSet findOptimalTeamConfigViaRotationsMultiThreaded(ConfigMatrix& orig_config_matrix, int rotation_size, int n_teams);
 
 template<int n_threads=1>
 void findOptimalTeamConfigViaRotation(const ConfigSet& orig_config_set, const ConfigMatrix& orig_config_matrix, int rotation_size, MapForThreadMoles<n_threads>map_for_moles, int pid);
-
-
-using TeamMap= std::map<Rank, int>;
-
-struct TeamForMoveGen{
-    int mark;
-    const TeamSet* team_set_ptr; 
-    TeamMap team_map;
-};
-
-struct TeamForMoveGenLess{
-    bool operator()(TeamForMoveGen*& g1, TeamForMoveGen*& g2){
-        return TeamSetLess{}(g1->team_set_ptr, g2->team_set_ptr);
-    }
-};
-
-using ConfigForMoveGen= std::vector<TeamForMoveGen>;
 
 template<int rotation_size=2>
 FORCE_INLINE void updateBannedMoves(const std::array<ConfigForMoveGen::iterator, rotation_size>& teams_indexes, MovesSet<rotation_size>& banned_moves, VisitedConfigSet& visited_teams_groups);
@@ -139,27 +55,6 @@ void generateMoves(const std::array<ConfigForMoveGen::iterator, rotation_size>&,
 //////////////////////////////////////////////////////////////////////////////////
 
 // hpp part
-
-template<int rotation_size>
-bool Move<rotation_size>::less(const Move<rotation_size>& m) const{
-
-    return std::lexicographical_compare(
-        this->m_move.begin(), this->m_move.end(), 
-        m.m_move.begin(), m.m_move.end(),
-        [](const MovePieceNBaseRankPair& p1, const MovePieceNBaseRankPair& p2){
-            std::string s1, s2;
-            s1.push_back(p1.first);
-            s1.push_back(p1.second);
-            s2.push_back(p2.first);
-            s2.push_back(p2.second);
-            return s1<s2;
-        });
-}
-
-template<int rotation_size>
-bool MovesSetLess<rotation_size>::operator()(const Move<rotation_size>& m1, const Move<rotation_size>& m2) const{
-    return m1.less(m2);
-}
 
 template<int n_threads>
 ConfigSet findOptimalTeamConfigViaRotationsMultiThreaded(ConfigMatrix& orig_config_matrix, int rotation_size, int n_teams){
@@ -189,8 +84,12 @@ ConfigSet findOptimalTeamConfigViaRotationsMultiThreaded(ConfigMatrix& orig_conf
 }
 
 template<int n_threads>
-void findOptimalTeamConfigViaRotation(const ConfigSet& orig_config_set, const ConfigMatrix& orig_config_matrix, int rotation_size, MapForThreadMoles<n_threads>map_for_moles, int pid=0){
-    
+void findOptimalTeamConfigViaRotation(
+    const ConfigSet& orig_config_set, 
+    const ConfigMatrix& orig_config_matrix, 
+    int rotation_size, 
+    MapForThreadMoles<n_threads>map_for_moles, 
+    int pid=0){
     
     /*
     #determina tutte le possibili mosse
