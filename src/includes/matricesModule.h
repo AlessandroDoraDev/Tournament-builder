@@ -13,111 +13,16 @@
 #include <random>
 #include <ranges>
 #include "macros/myMacros.h"
-#include "threadSafeTools.h"
+#include "PlayerList.h"
+#include "CSVRows.h"
+#include "TeamsMatrix.h"
+#include "PseudoMatrix.h"
+#include "PlayerBag.h"
+#include "ConfigMatrix.h"
+#include "ConfigSet.h"
 #include "absl/container/flat_hash_set.h"
 #include "absl/container/btree_set.h"
 
-extern const int N_PLAYERS;
-
-using BaseRank = uint8_t;
-
-using BaseID = uint8_t;
-
-enum class Rank: BaseRank{
-    Empty = 0,
-    Iron,
-    Bronze,
-    Silver,
-    Gold,
-    Platinum,
-    Diamond,
-    Ascendant,
-    Immortal,
-    Radiant,
-    COUNT
-};
-
-const std::unordered_map<std::string, Rank> STRING_RANK_TO_ENUM_MAP={
-    {"Empty", Rank::Empty},
-    {"Iron", Rank::Iron},
-    {"Bronze", Rank::Bronze},
-    {"Silver", Rank::Silver},
-    {"Gold", Rank::Gold},
-    {"Platinum", Rank::Platinum},
-    {"Diamond", Rank::Diamond},
-    {"Ascendant", Rank::Ascendant},
-    {"Immortal", Rank::Immortal},
-    {"Radiant", Rank::Radiant}
-};
-
-const std::unordered_map<Rank, std::string> ENUM_RANK_TO_STRING_MAP={
-    {Rank::Empty, "Empty"},
-    {Rank::Iron, "Iron"},
-    {Rank::Bronze, "Bronze"},
-    {Rank::Silver, "Silver"},
-    {Rank::Gold, "Gold"},
-    {Rank::Platinum, "Platinum"},
-    {Rank::Diamond, "Diamond"},
-    {Rank::Ascendant, "Ascendant"},
-    {Rank::Immortal, "Immortal"},
-    {Rank::Radiant, "Radiant"}
-};
-
-struct Player {
-    std::string name;
-    Rank rank;
-    friend std::ostream& operator<<(std::ostream& o, const Player& p);
-    operator std::string() const{
-        return name+" ("+ENUM_RANK_TO_STRING_MAP.at(rank)+")";
-    }
-};
-
-using CSVRows = std::vector<std::vector<std::string>>;
-
-
-using IDRankPair = std::pair<BaseID, BaseRank>;
-
-using PlayerBag = std::vector<std::vector<IDRankPair>>;
-
-using ConfigMatrix = std::vector<IDRankPair>; // each player rapresented by a number paired with the value of their rank
-
-using TeamsMatrix = std::vector<Player>;
-using PlayerList = std::vector<Player>;
-
-template<typename T>
-using PseudoMatrix = std::vector<T>;
-
-struct IDRankPairLess{
-    bool operator()(const IDRankPair&, const IDRankPair&) const;
-};
-
-struct RankLess{
-    bool operator()(const Rank&, const Rank&) const;
-};
-
-//using TeamSet = std::multiset<Rank, RankLess>;
-using TeamSet = absl::btree_multiset<Rank>;
-
-
-struct TeamSetLess{
-    bool operator()(const TeamSet&, const TeamSet&) const;
-    bool operator()(const TeamSet*&, const TeamSet*&) const;
-};
-
-
-//using ConfigSet = std::multiset<TeamSet, TeamSetLess>;
-using ConfigSet = absl::btree_multiset<TeamSet>;
-
-
-struct VisitedConfigSetHash{
-    size_t operator()(const ConfigSet&) const;
-};
-
-
-using MoveGenConfigSet = absl::btree_set<std::pair<int, TeamSet>>;
-
-//using VisitedConfigSet= std::unordered_set<ConfigSet, VisitedConfigSetHash>;
-using VisitedConfigSet = absl::flat_hash_set<MoveGenConfigSet>;
 
 CSVRows readCSV(const std::string& filename);
 

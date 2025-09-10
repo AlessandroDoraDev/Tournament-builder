@@ -1,4 +1,4 @@
 #pragma once 
-#include <type_traits.h>
+#include <cstdint>
 
 using BaseID = uint8_t;

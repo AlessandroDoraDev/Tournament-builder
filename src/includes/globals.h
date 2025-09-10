@@ -4,7 +4,10 @@
 #include <string>
 
 
-extern const int N_PLAYERS;
+
+inline constexpr int N_PLAYERS=5;
+
+inline constexpr int ROTATION_SIZE=3;
 
 extern const std::unordered_map<std::string, Rank> STRING_RANK_TO_ENUM_MAP;
 

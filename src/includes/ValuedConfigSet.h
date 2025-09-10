@@ -1,5 +1,5 @@
 #pragma once
-#include "matricesModule.h"
+#include "ConfigSet.h"
 
 struct ValuedConfigSet{
     ConfigSet set;

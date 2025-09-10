@@ -1,6 +1,5 @@
 #pragma once
 #include <utility>
-#include "matricesModule.h"
 #include "MovePieceNBaseRankPair.h"
 
 template<int rotation_size=2>

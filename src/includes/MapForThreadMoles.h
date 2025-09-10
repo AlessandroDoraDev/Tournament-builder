@@ -1,8 +1,8 @@
 #pragma once
-#include "threadSafeTools.h"
+#include "thread_safe/ThreadSafeUnorderedSet.h"
 #include "ValuedConfigSet.h"
-#include "MarkedConfigSet.h"
-#include "matricesModule.h"
+#include "hash/VisitedConfigSetHash.h"
+#include "ConfigSet.h"
 
 template<int n_threads=1>
 struct MapForThreadMoles{

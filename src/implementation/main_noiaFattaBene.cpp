@@ -1,15 +1,25 @@
-
-#include "generalIncludes.h"
+#include <iostream>
+#include <vector>
+#include <string>
+#include <fstream>
+#include <sstream>
+#include <windows.h>
+#include <algorithm>
+#include <array>
+#include <thread>
+#include <utility>
+#include <ranges>
 #include <chrono>
 #include <string>
+#include "globals.h"
+#include "core.h"
+#include "matricesModule.h"
+#include "silly_strats/funcs.h"
 #include "profiling/Instrumentor.h"
 #include "absl/hash/hash.h"
 #include "absl/container/flat_hash_set.h"
 #include "absl/container/btree_set.h"
 
-
-const int N_PLAYERS=5;
-const int ROTATION_SIZE=3;
 
 const std::string TEST_FILE_DIR = "../../../../assets/CorrettoOlly.csv";
 
