@@ -10,6 +10,7 @@ class Move{
 public:
     Move(){}
     explicit Move(MoveArrT<rotation_size>&& moves): m_move(std::move(moves)){}
+    explicit Move(const MoveArrT<rotation_size>& moves): m_move(moves){}
     Move(std::initializer_list<MovePieceNBaseRankPair> moves): m_move(std::move(moves)){}
     Move(std::initializer_list<MovePieceNRankPair> moves){
         int i=0;

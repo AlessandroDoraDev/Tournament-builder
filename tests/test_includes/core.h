@@ -34,16 +34,20 @@ template<int n_threads=1>
 void findOptimalTeamConfigViaRotation(const ConfigSet& orig_config_set, const ConfigMatrix& orig_config_matrix, int rotation_size, MapForThreadMoles<n_threads>map_for_moles, int pid);
 
 template<int rotation_size=2>
-FORCE_INLINE void updateBannedMoves(const std::array<ConfigForMoveGen::iterator, rotation_size>& teams_indexes, MovesSet<rotation_size>& banned_moves, VisitedConfigSet& visited_teams_groups);
+FORCE_INLINE void updateBannedMoves_integral(const std::array<ConfigForMoveGen::iterator, rotation_size>& teams_indexes, MovesSet<rotation_size>& banned_moves, VisitedConfigSet& visited_teams_groups);
 
 template<int rotation_size=2>
-void generateMoves(const MarkedTConfigSet&, MovesSet<rotation_size>&, const Move<rotation_size>&);
+FORCE_INLINE void updateBannedMoves_sped_up(const std::array<ConfigForMoveGen::iterator, rotation_size>& teams_indexes, MovesSet<rotation_size>& banned_moves, VisitedConfigSet& visited_teams_groups);
+
 
 template<int rotation_size=2>
-void generateMoves(const MarkedTConfigSet&, MovesSet<rotation_size>&);
+void generateMoves(const MarkedTConfigSet&, MovesSet<rotation_size>&, const Move<rotation_size>&, bool integral);
 
 template<int rotation_size=2>
-void generateMoves(const std::array<ConfigForMoveGen::iterator, rotation_size>&, MovesSet<rotation_size>&, const ConfigForMoveGen&, MovesSet<rotation_size>&, VisitedConfigSet&);
+void generateMoves(const MarkedTConfigSet&, MovesSet<rotation_size>&, bool integral);
+
+template<int rotation_size=2>
+void generateMoves(const std::array<ConfigForMoveGen::iterator, rotation_size>&, MovesSet<rotation_size>&, const ConfigForMoveGen&, MovesSet<rotation_size>&, VisitedConfigSet&, bool integral);
 
 // template<int rotation_size=2>
 // void generateMovesFromGeneratedConfig(const MarkedTConfigSet&, MovesSet<rotation_size>&, const Move<rotation_size>&);
@@ -122,20 +126,20 @@ template<int rotation_size>
 void generateMoves(
     const MarkedTConfigSet& config_set, 
     MovesSet<rotation_size>& moves_set, 
-    const Move<rotation_size>& gen_move
+    const Move<rotation_size>& gen_move,
+    bool integral
         ){
-    
     PROFILE_FUNCTION();
     if(moves_set.empty()){
         MovesSet<rotation_size>& empty_moves_set=moves_set;
-        generateMoves(config_set, empty_moves_set);
+        generateMoves(config_set, empty_moves_set, integral);
     }else{
         // generateMovesFromGeneratedConfig(config_set, moves_set, gen_move);
     }
 }
 
 template<int rotation_size>
-void generateMoves(const MarkedTConfigSet& config_set, MovesSet<rotation_size>& moves_set){
+void generateMoves(const MarkedTConfigSet& config_set, MovesSet<rotation_size>& moves_set, bool integral){
     
     PROFILE_FUNCTION();
     
@@ -160,7 +164,7 @@ void generateMoves(const MarkedTConfigSet& config_set, MovesSet<rotation_size>& 
             std::all_of(indexes.begin(), indexes.end(), [&indexes](const ConfigForMoveGen::iterator& x){return x==indexes[0];});
 
         if(!completely_same_team_rotation){
-            generateMoves(indexes, moves_set, teams_list_p, banned_moves, visited_teams_groups);
+            generateMoves(indexes, moves_set, teams_list_p, banned_moves, visited_teams_groups, integral);
         }
         //incrementing similar to count
         int i=1;
@@ -175,7 +179,77 @@ void generateMoves(const MarkedTConfigSet& config_set, MovesSet<rotation_size>& 
 
 
 template<int rotation_size>
-FORCE_INLINE void updateBannedMoves(
+FORCE_INLINE void updateBannedMoves_integral(
+    const std::array<ConfigForMoveGen::iterator, rotation_size>& teams_indexes,
+    MovesSet<rotation_size>& banned_moves, 
+    VisitedConfigSet& visited_teams_groups){
+    // auto range= std::ranges::views::iota;
+    // Se c'è un elemento che non corrisponde per team allora fa parte della
+    // mossa irrilevante. Gli elementi non corrispondenti sono SEMPRE sulla stessa
+    // colonna se e solo se il resto degli elementi è condiviso e le liste sono
+    // ordinate
+    using ActualTeamSetIterator = decltype(teams_indexes[0]->team_set_ptr->begin());
+    using MarkTeamSetItPair= std::pair<int, ActualTeamSetIterator>;
+    using ColIterators= std::array<MarkTeamSetItPair, rotation_size>;
+    MoveGenConfigSet team_group;
+    ColIterators col_iterators;
+    int i=0;
+    for(const ConfigForMoveGen::iterator& team_ptr: teams_indexes){
+        col_iterators[i].first=team_ptr->mark;
+        col_iterators[i].second=team_ptr->team_set_ptr->begin();
+        team_group.emplace(team_ptr->mark, *team_ptr->team_set_ptr);
+        i++;
+    }
+    //codice sottostante commentato perché la logica dei visited teams non conta 34 mosse bannabili
+    //secondo il resto dell'algoritmo.
+    //static int roba = 0;
+    ////dovrebbe controllare che la mossa non generi lo stesso
+    //if(visited_teams_groups.contains(team_group)){
+    //    std::cout << roba << "\n";
+    //    roba++;
+    //    return;
+    //}
+    //else {
+    //    visited_teams_groups.insert(team_group);
+    //}
+    int mismatch_cnt=0;
+    MoveArrT<rotation_size> move_arr;
+    using ActualTeamSetIterator = decltype(teams_indexes[0]->team_set_ptr->end());
+    ActualTeamSetIterator end=teams_indexes[0]->team_set_ptr->end(); //from first of teams take end;
+    while(col_iterators[0].second!=end){
+
+        bool all_match=std::all_of(col_iterators.begin(), col_iterators.end(), 
+        [&col_iterators](const MarkTeamSetItPair& it){
+            return *it.second==*col_iterators[0].second;
+        });
+
+        if(!all_match){
+            mismatch_cnt++;
+            if(mismatch_cnt==1){
+                i=0;
+                for(MarkTeamSetItPair& col_mark_it_pair: col_iterators){
+                    move_arr[i].first= col_mark_it_pair.first;
+                    move_arr[i].second= static_cast<BaseRank>(*col_mark_it_pair.second);
+                    i++;
+                }
+            }
+        }
+
+        for(MarkTeamSetItPair& col_mark_it_pair: col_iterators){
+            ++col_mark_it_pair.second;
+        }
+    }
+    if(mismatch_cnt==1){
+        MoveArrT<rotation_size> inverse_move_arr;
+        std::copy(move_arr.rbegin(), move_arr.rend(), inverse_move_arr.begin());
+        banned_moves.emplace(std::move(move_arr));
+        banned_moves.emplace(std::move(inverse_move_arr));
+    }
+
+}
+
+template<int rotation_size>
+FORCE_INLINE void updateBannedMoves_sped_up(
     const std::array<ConfigForMoveGen::iterator, rotation_size>& teams_indexes,
     MovesSet<rotation_size>& banned_moves, 
     VisitedConfigSet& visited_teams_groups){
@@ -245,7 +319,9 @@ FORCE_INLINE void updateBannedMoves(
         // banned_moves.emplace(std::move(move_arr));
         // banned_moves.emplace(std::move(inverse_move_arr));
     }
+
 }
+
 
 template<int rotation_size>
 void generateMoves(
@@ -253,12 +329,16 @@ void generateMoves(
     MovesSet<rotation_size>& moves_set, 
     const ConfigForMoveGen& teams_list_p, 
     MovesSet<rotation_size>& banned_moves, 
-    VisitedConfigSet& visited_teams_groups){
+    VisitedConfigSet& visited_teams_groups,
+    bool integral){
     
     using ActualTeamSetIterator = decltype(teams_indexes[0]->team_set_ptr->begin());
     using TeamItTeamMovGenPair= std::pair<ActualTeamSetIterator, const TeamForMoveGen*>;
-    
-    updateBannedMoves(teams_indexes, banned_moves, visited_teams_groups);
+    if(integral){
+        updateBannedMoves_integral(teams_indexes, banned_moves, visited_teams_groups);
+    }else{
+        updateBannedMoves_sped_up(teams_indexes, banned_moves, visited_teams_groups);
+    }
     std::array<TeamItTeamMovGenPair, rotation_size> rank_indexes;
     std::transform(teams_indexes.begin(), teams_indexes.end(), rank_indexes.begin(),
         [](const ConfigForMoveGen::iterator& it) {

@@ -21,12 +21,11 @@
 #include "absl/container/btree_set.h"
 
 
-const std::string TEST_FILE_DIR = "../../../../assets/CorrettoOlly.csv";
 
 void main1() {
 
     SetConsoleOutputCP(CP_UTF8); //changing windows console decoding to utf8
-    CSVRows rows = readCSV(TEST_FILE_DIR);
+    CSVRows rows = readCSV(TEST_FILE_DIR.data());
     PlayerList player_list = formatRowsToPlayerList(rows);
     int n_teams = static_cast<int>(player_list.size() / N_PLAYERS);
     std::unordered_map<BaseID, Player> player_dict;
@@ -47,22 +46,18 @@ void main1() {
     MarkedTConfigSet markedSet;
     std::transform(config_set.begin(), config_set.end(), std::back_inserter(markedSet),
         [](const TeamSet& team) { return &team; });
+
     std::chrono::time_point start = std::chrono::high_resolution_clock::now();
     Instrumentor::Get().BeginSession("GenMovesProfiling");
     generateMoves<ROTATION_SIZE>(markedSet, moves_set, gen_move);
     Instrumentor::Get().EndSession();
     std::chrono::time_point end = std::chrono::high_resolution_clock::now();
+    
     std::cout << "Moves set size is "<< moves_set.size() << "\n";
     std::cout << "Moves generation took " << formatDurationDetailed(end-start) << "\n";
-
-    /*absl::flat_hash_set<Move<3>> set;
-    set.insert({ {0, Rank::Empty}, {0, Rank::Empty}, {0, Rank::Empty} });
-    for(const Move<3>& n: set){
-        std::cout << "\n" << (std::string)n;
-    }*/
     printMatrix(config_matrix, n_teams, N_PLAYERS);
-    std::cout << "Matrix quality is " << configMatrixQuality(config_matrix, n_teams, N_PLAYERS) << "\n";
-    printMatrix(configMatrixToTeams(config_matrix, player_dict), n_teams, N_PLAYERS);
+    //std::cout << "Matrix quality is " << configMatrixQuality(config_matrix, n_teams, N_PLAYERS) << "\n";
+    //printMatrix(configMatrixToTeams(config_matrix, player_dict), n_teams, N_PLAYERS);
 
 
     // TeamsMatrix teams_matrix=configMatrixToTeams(config_matrix, player_dict);
@@ -76,7 +71,7 @@ void main1() {
 void main2() {
 
     SetConsoleOutputCP(CP_UTF8); //changing windows console decoding to utf8
-    CSVRows rows = readCSV(TEST_FILE_DIR);
+    CSVRows rows = readCSV(TEST_FILE_DIR.data());
     PlayerList player_list = formatRowsToPlayerList(rows);
     int n_teams = static_cast<int>(player_list.size() / N_PLAYERS);
     std::unordered_map<BaseID, Player> player_dict;
@@ -94,6 +89,8 @@ void main2() {
 
 }
 
+void main_test();
+
 int main(){
 #ifdef MIO_DEBUG
     std::cout<<"Siamo in debug mode\n";
@@ -102,7 +99,7 @@ int main(){
 #else
     std::cout<<"La definizione non ha funzionato\n";
 #endif
-    main2();
+    main1();
 }
 
 /*
