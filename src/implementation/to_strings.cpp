@@ -14,25 +14,6 @@ std::string to_string(const TeamSet& team_set){
     return std::format("[{}]", pre_res);
 }
 
-std::string to_string(const MarkedTConfigSet& config_set){
-    std::string res;
-    int i=0;
-    for(const TeamSet*const& team_ptr: config_set){
-        res+=std::format("{{{}, {}}}\n", i, to_string(*team_ptr));
-        i++;
-    }
-    return res;
-}
-
-std::string to_string(const TeamToIntMap& team_to_int_map){
-    return std::format("[{}]\n",
-    sequence_to_string(
-        team_to_int_map.begin(),
-        team_to_int_map.end(),
-        [](const std::pair<TeamSet*, BaseID>& entry){
-            return std::format("({}, {})", static_cast<void*>(entry.first), entry.second);
-        }, ",\n"));
-}
 
 
 

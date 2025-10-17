@@ -48,9 +48,6 @@ Config::operator std::string(){
     return res;
 }
 
-constexpr TeamArray& Config::operator[](std::size_t index){
-    return m_team_views[index];
-}
 
 
 void Config::sort(){

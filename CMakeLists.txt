@@ -15,17 +15,11 @@ set(test_dir tests)
 add_executable(main 
 ${my_impl_dir}/main_noiaFattaBene.cpp
 ${my_impl_dir}/matricesModule.cpp
-${my_impl_dir}/core.cpp
 ${my_impl_dir}/globals.cpp
 ${my_impl_dir}/Config.cpp
 ${my_impl_dir}/TournamentConfig.cpp
 ${my_impl_dir}/TeamArray.cpp
 ${my_impl_dir}/strat.cpp
-${my_impl_dir}/less/IDRankPairLess.cpp
-${my_impl_dir}/less/RankLess.cpp
-${my_impl_dir}/less/TeamSetLess.cpp
-${my_impl_dir}/hash/VisitedConfigSetHash.cpp
-${my_impl_dir}/silly_strats/funcs.cpp
 ${my_impl_dir}/to_strings.cpp
 ${test_dir}/main_test.cpp)
 
@@ -34,6 +28,7 @@ target_compile_definitions(main
 PRIVATE 
 $<$<CONFIG:Debug>:MIO_DEBUG>
 $<$<CONFIG:Release>:MIO_RELEASE>
+#PROFILING_FLAG
 )
 
 if (MSVC)
