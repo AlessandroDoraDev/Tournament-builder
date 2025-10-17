@@ -4,6 +4,7 @@ project(my_project)
 
 set(CMAKE_CXX_STANDARD 20)
 
+
 # Process Abseil's CMake build system
 add_subdirectory(libs/abseil-cpp)
 
@@ -16,6 +17,10 @@ ${my_impl_dir}/main_noiaFattaBene.cpp
 ${my_impl_dir}/matricesModule.cpp
 ${my_impl_dir}/core.cpp
 ${my_impl_dir}/globals.cpp
+${my_impl_dir}/Config.cpp
+${my_impl_dir}/TournamentConfig.cpp
+${my_impl_dir}/TeamArray.cpp
+${my_impl_dir}/strat.cpp
 ${my_impl_dir}/less/IDRankPairLess.cpp
 ${my_impl_dir}/less/RankLess.cpp
 ${my_impl_dir}/less/TeamSetLess.cpp
@@ -41,6 +46,7 @@ endif()
 set_target_properties(main PROPERTIES LINK_DEPENDS_NO_SHARED TRUE)
 
 target_include_directories(main PRIVATE ${my_includes_dir} libs ${test_dir})
+
 
 # Declare dependency on the absl::strings library
 target_link_libraries(main absl::flat_hash_set absl::hash absl::btree)

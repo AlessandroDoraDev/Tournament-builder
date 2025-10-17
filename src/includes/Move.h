@@ -11,11 +11,17 @@ public:
     Move(){}
     explicit Move(MoveArrT<rotation_size>&& moves): m_move(std::move(moves)){}
     explicit Move(const MoveArrT<rotation_size>& moves): m_move(moves){}
-    Move(std::initializer_list<MovePieceNBaseRankPair> moves): m_move(std::move(moves)){}
     Move(std::initializer_list<MovePieceNRankPair> moves){
         int i=0;
         for(const MovePieceNRankPair& r: moves){
-            m_move[i]={r.first, static_cast<BaseRank>(r.second)};
+            m_move[i]={r.first, r.second};
+            i++;
+        }
+    }
+    Move(std::initializer_list<MovePieceNBaseRankPair> moves){
+        int i=0;
+        for(const MovePieceNRankPair& r: moves){
+            m_move[i]={r.first, static_cast<Rank>(r.second)};
             i++;
         }
     }

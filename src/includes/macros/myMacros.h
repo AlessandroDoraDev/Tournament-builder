@@ -1,3 +1,4 @@
+#pragma once
 #include "profiling/Instrumentor.h"
 
 #define PROFILING_FLAG 1
