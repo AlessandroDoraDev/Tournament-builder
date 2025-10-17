@@ -122,7 +122,7 @@ float configMatrixQuality(const ConfigMatrix& matrix, int rows, int cols){
             matrix.begin() + (i + 1) * cols, 
             0.0,
             [](float acc, const IDRankPair& player) {return acc + player.second; });
-        team_avg/=cols;
+        //team_avg/=cols;   //no need to involve division. It can be done manually with no worries
         if(min==-1 && max==-1){
             min=max=team_avg;
         }else{

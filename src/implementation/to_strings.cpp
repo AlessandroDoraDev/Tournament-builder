@@ -23,3 +23,29 @@ std::string to_string(const MarkedTConfigSet& config_set){
     }
     return res;
 }
+
+std::string to_string(const TeamToIntMap& team_to_int_map){
+    return std::format("[{}]\n",
+    sequence_to_string(
+        team_to_int_map.begin(),
+        team_to_int_map.end(),
+        [](const std::pair<TeamSet*, BaseID>& entry){
+            return std::format("({}, {})", static_cast<void*>(entry.first), entry.second);
+        }, ",\n"));
+}
+
+
+
+std::string to_string(const Player& player){
+    return std::format("({}, {})", 
+        player.name, 
+        to_string(player.rank));
+}
+
+std::string round_to_string(double value, int n) {
+    double factor = std::pow(10.0, n);
+    double rounded_value = std::round(value * factor) / factor;
+    std::ostringstream ss;
+    ss<<std::fixed << std::setprecision(n)<<rounded_value;
+    return ss.str();
+}

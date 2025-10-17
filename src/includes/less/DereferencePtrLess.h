@@ -1,3 +1,4 @@
+#pragma once
 #include "TeamSet.h"
 
 template <typename T, typename Compare = std::less<T>>

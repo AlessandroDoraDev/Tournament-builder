@@ -1,6 +1,6 @@
 {
   "cmake.debugConfig": {
-    "externalConsole": true
+    "console": "externalTerminal"
   },
   "files.associations": {
     "algorithm": "cpp",

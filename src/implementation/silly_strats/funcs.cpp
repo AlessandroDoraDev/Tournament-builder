@@ -267,3 +267,4 @@ ConfigMatrix dumbStrategy(ConfigMatrix& matrix, int n_teams, int n_players) {
             return m.first < m2.first;
         })->second;
 }
+

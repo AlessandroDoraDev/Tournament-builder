@@ -1,6 +1,6 @@
 #pragma once
 #include <utility>
-#include "MovePieceNBaseRankPair.h"
+#include "MovePieceNRankPair.h"
 
 template<int rotation_size=2>
-using MoveArrT= std::array<MovePieceNBaseRankPair, rotation_size>;
+using MoveArrT= std::array<MovePieceNRankPair, rotation_size>;
