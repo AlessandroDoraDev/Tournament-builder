@@ -2,3 +2,4 @@ libs_source/abseil-cpp/
 out/
 program_outputs/
 assets/
+*.log

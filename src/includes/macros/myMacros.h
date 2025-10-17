@@ -1,11 +1,10 @@
 #pragma once
 #include "profiling/Instrumentor.h"
 
-#define PROFILING_FLAG 1
 
 #define SIMPLE_RANGE(i, init, end) size_t i=0; i<end; i++
 
-#if PROFILING_FLAG
+#ifdef PROFILING_FLAG
     #define PROFILE_SCOPE(name) InstrumentationTimer timer##__LINE__(name)
     #define PROFILE_FUNCTION() PROFILE_SCOPE(__FUNCSIG__)
 #else

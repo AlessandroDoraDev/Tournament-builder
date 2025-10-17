@@ -14,6 +14,7 @@
 #include <cstdlib>
 #include <unordered_set>
 #include <unordered_map>
+#include "Config.h"
 
 #define R_INT(r) static_cast<int>(r)
 
@@ -27,18 +28,19 @@ struct TripletEq{
     bool operator()(Triplet const& t1, Triplet const& t2) const noexcept {return t1==t2;}
 };
 
-//using TripletSet= absl::flat_hash_set<Triplet>;
-using TripletSet= std::unordered_set<Triplet, TripletHash, TripletEq>;
 using IndexesArray= std::array<std::size_t, ROTATION_SIZE>;
 using SymbolsArray= std::array<char, ROTATION_SIZE>;
 using RankMoveSumArray= std::array<int, ROTATION_SIZE>;
-// using RankMoveSumMap= absl::flat_hash_map<std::size_t, int>;
-using RankMoveSumMap= std::unordered_map<std::size_t, int>;
-using PntsMap= std::unordered_map<std::size_t, int>;
+#ifdef MIO_DEBUG
+    using TripletSet= std::unordered_set<Triplet, TripletHash, TripletEq>;
+    using RankMoveSumMap= std::unordered_map<std::size_t, int>;
+    using PntsMap= std::unordered_map<std::size_t, int>;
+#else
+    using TripletSet= absl::flat_hash_set<Triplet>;
+    using RankMoveSumMap= absl::flat_hash_map<std::size_t, int>;
+    using PntsMap= absl::flat_hash_map<std::size_t, int>;
+#endif
 
-// struct AllignedTeamsData{
-//     std::size index;  
-// };
 
 void incrementSelectedIndexesByOne(IndexesArray& selected_indexes, std::size_t roof){
     bool carry=true;
@@ -75,11 +77,8 @@ void incrementSelectedRIndexesByOne(std::array<std::size_t, ROTATION_SIZE>& sele
     }
 }
 
-bool deduceAndApplyOnceMove(Config& config, IndexesArray& selected_indexes){
-    double ecc=config.avg_rank-static_cast<int>(config.avg_rank) > 0?1:0;
-
+bool deduceAndApplyOnceMove(Config& config, IndexesArray& selected_indexes, const double ecc){
     SymbolsArray team_status;
-    std::array<std::size_t, ROTATION_SIZE> dst_array;
     std::transform(selected_indexes.begin(), selected_indexes.end(), team_status.begin(),
     [&config](std::size_t index){
         int pnts= config[index].getPnts();
@@ -99,11 +98,6 @@ bool deduceAndApplyOnceMove(Config& config, IndexesArray& selected_indexes){
     RankMoveSumArray orig_sum_array;
     RankMoveSumMap orig_sum_map;
     for(int i=0; i<ROTATION_SIZE; i++){
-        // if(team_status[i]=='>'){
-        //     orig_sum_array[i]= config[selected_indexes[i]].getPnts()-(config.at_least_pnts_per_team+ecc);
-        // }else{
-        //     orig_sum_array[i]= config[selected_indexes[i]].getPnts()-config.at_least_pnts_per_team; 
-        // }
         orig_sum_array[i]= config[selected_indexes[i]].getPnts()-config.at_least_pnts_per_team;
     }
     for(int i=0; i<ROTATION_SIZE; i++){
@@ -141,14 +135,7 @@ bool deduceAndApplyOnceMove(Config& config, IndexesArray& selected_indexes){
             pnts[selected_indexes[i]]-=curr_movement;
             pnts[selected_indexes[next_i]]+=curr_movement;
         }
-        auto within= [](int a, int li, int ls){return a>=li&&a<=ls;};
         for(auto& pair: sum_map){
-            // if(within(
-            //     pnts[selected_indexes[i]]-sum_map[selected_indexes[i]], 
-            //     config.at_least_pnts_per_team, 
-            //     config.at_least_pnts_per_team+ecc)){
-            //     sum_map[selected_indexes[i]]=0;
-            // }
             int& sum=pair.second;
             if(sum>0){
                 sum--;
@@ -177,24 +164,19 @@ void deduceAndApplyMoves(Config& config){
     #define SELECTED_INDEXES_RANGE selected_indexes.begin(), selected_indexes.end()
     IndexesArray selected_indexes;
     const std::size_t roof= config.n_rows;
+    const double ecc=config.avg_rank-static_cast<int>(config.avg_rank) > 0?1:0;
     auto equalToRoofFunc=[roof](std::size_t index){return index==roof-1;};
     auto allSelectedIndexesEqualFunc=[&selected_indexes](std::size_t i){return i==selected_indexes[0];};
 
     std::fill(SELECTED_INDEXES_RANGE, 0);
     TripletSet explored_triplets;
-    // Triplet td;
-    // std::array<std::size_t, ROTATION_SIZE> mv={0, 0, 10};
-    // td.insert(mv.begin(), mv.end());
     while(!std::all_of(SELECTED_INDEXES_RANGE, equalToRoofFunc)){
         Triplet t;
         t.insert(selected_indexes.begin(), selected_indexes.end());
-        // if(t==td){
-        //     int i=0;
-        // }
         bool all_indexes_equal=std::all_of(SELECTED_INDEXES_RANGE, allSelectedIndexesEqualFunc);
         if(!explored_triplets.contains(t) && !all_indexes_equal){
             explored_triplets.emplace(t);
-            bool moveSucceded=deduceAndApplyOnceMove(config, selected_indexes);
+            bool moveSucceded=deduceAndApplyOnceMove(config, selected_indexes, ecc);
             if(moveSucceded){
                 std::fill(SELECTED_INDEXES_RANGE, 0);
                 explored_triplets.clear();

@@ -13,7 +13,7 @@ public:
     Config(const PlayerList&, std::size_t n_rows, std::size_t n_cols);
     operator std::string();
     std::string obj_to_string(){return (std::string)(*this);}
-    constexpr TeamArray& operator[](std::size_t offset);
+    inline constexpr TeamArray& operator[](std::size_t index){return m_team_views[index];}
     template<int rotation_size=2>
     void applyMove(const Move<rotation_size>&);
     template<int rotation_size=2>

@@ -86,42 +86,18 @@ ConfigSet configMatrixToSet(const ConfigMatrix& config_matrix, int rows, int col
     return out;
 }
 
-ConfigMatrix configSetToMatrix(const ConfigSet& config_set, PlayerBag player_bag){ // need to know Matrix dims beforehand. Might make it more efficient by passing it. But it's not needed rn
-    ConfigMatrix out;
-    for(TeamSet team: config_set){
-        for(Rank rank: team){
-            size_t pos=static_cast<size_t>(rank);
-            IDRankPair p=player_bag[pos].back();
-            player_bag[pos].pop_back();
-            out.push_back(p);
-        }
-    }
-    return out;
-}
 
 
-PlayerBag makePlayerBag(const ConfigMatrix& player_list){
-    PlayerBag bag;
-    bag.resize(static_cast<size_t>(Rank::COUNT));
-    for(std::vector<IDRankPair>& tier: bag){
-        tier.reserve(N_PLAYERS);
-    }
-    for(IDRankPair p: player_list){
-        bag[static_cast<size_t>(p.second)].push_back(p);
-    }
-    return bag;
-}
-
-float configMatrixQuality(const ConfigMatrix& matrix, int rows, int cols){
+double configMatrixQuality(const ConfigMatrix& matrix, int rows, int cols){
     auto range= std::ranges::views::iota;
-    float min=-1;
-    float max=-1;
+    double min=-1;
+    double max=-1;
     for(int i: range(0, rows)){
-        float team_avg = std::accumulate(
+        double team_avg = std::accumulate(
             matrix.begin() + i * cols, 
             matrix.begin() + (i + 1) * cols, 
             0.0,
-            [](float acc, const IDRankPair& player) {return acc + player.second; });
+            [](double acc, const IDRankPair& player) {return acc + player.second; });
         //team_avg/=cols;   //no need to involve division. It can be done manually with no worries
         if(min==-1 && max==-1){
             min=max=team_avg;

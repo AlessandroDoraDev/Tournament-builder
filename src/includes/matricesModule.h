@@ -17,7 +17,6 @@
 #include "CSVRows.h"
 #include "TeamsMatrix.h"
 #include "PseudoMatrix.h"
-#include "PlayerBag.h"
 #include "ConfigMatrix.h"
 #include "ConfigSet.h"
 #include "absl/container/flat_hash_set.h"
@@ -47,12 +46,9 @@ void shuffleMatrixArray(PseudoMatrix<T>& matrix);
 
 ConfigSet configMatrixToSet(const ConfigMatrix& config_matrix, int rows, int cols);
 
-ConfigMatrix configSetToMatrix(const ConfigSet& config_set, PlayerBag player_bag); // need to know Matrix dims beforehand
-
-PlayerBag makePlayerBag(const ConfigMatrix& player_list);
 
 
-float configMatrixQuality(const ConfigMatrix&, int n_teams, int n_players);
+double configMatrixQuality(const ConfigMatrix&, int n_teams, int n_players);
 
 //////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////
