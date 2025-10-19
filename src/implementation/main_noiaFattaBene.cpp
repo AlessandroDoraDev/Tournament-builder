@@ -86,8 +86,3 @@ int main(){
 #endif
     main1();
 }
-
-/*
- * Bisogna implementare la generazione di mosse a partire da una config che ha gi� un set di mosse e una mossa generatrice.
- * Vanno generate le mosse legate
- */

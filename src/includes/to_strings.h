@@ -1,15 +1,12 @@
 #pragma once
 #include <iostream>
 #include <string>
-#include "TeamSet.h"
 #include "Player.h"
 
 
 std::string to_string(const Rank& rank);
 
 std::string to_string(const Player& player);
-
-std::string to_string(const TeamSet& team_set);
 
 std::string round_to_string(double value, int n);
 
