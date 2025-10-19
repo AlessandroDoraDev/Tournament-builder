@@ -15,10 +15,7 @@
 #include "macros/myMacros.h"
 #include "PlayerList.h"
 #include "CSVRows.h"
-#include "TeamsMatrix.h"
 #include "PseudoMatrix.h"
-#include "ConfigMatrix.h"
-#include "ConfigSet.h"
 #include "absl/container/flat_hash_set.h"
 #include "absl/container/btree_set.h"
 
@@ -27,28 +24,11 @@ CSVRows readCSV(const std::string& filename);
 
 PlayerList formatRowsToPlayerList(const CSVRows& rows);
 
-//Rank stringRankToEnum(std::string name);
-
-ConfigMatrix teamsToConfigMatrix(const TeamsMatrix& teams_matrix, std::unordered_map<BaseID, Player>& player_dict);
-
-TeamsMatrix configMatrixToTeams(const ConfigMatrix& config_matrix, const std::unordered_map<BaseID, Player>& player_dict);
-
-//stream operators to make the printMatrix function usable for all the types it's intended for
-std::ostream& operator<<(std::ostream& os, const IDRankPair& p);
-
 template<typename T>
 void printMatrix(const PseudoMatrix<T>& matrix, int rows, int cols);
 
 template<typename T>
 void shuffleMatrixArray(PseudoMatrix<T>& matrix);
-
-
-
-ConfigSet configMatrixToSet(const ConfigMatrix& config_matrix, int rows, int cols);
-
-
-
-double configMatrixQuality(const ConfigMatrix&, int n_teams, int n_players);
 
 //////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////
