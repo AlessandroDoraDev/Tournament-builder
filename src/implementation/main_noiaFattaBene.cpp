@@ -76,6 +76,14 @@ void main1() {
 
 void main_test();
 
+#include "small-gui-cpp.h"
+#include <memory>
+
+void mainGui(){
+    r_init();
+    std::unique_ptr<mu_Context> xtx= std::unique_ptr<mu_Context>((mu_Context*) malloc(sizeof(mu_Context)));
+}
+
 int main(){
 #ifdef MIO_DEBUG
     std::cout<<"Siamo in debug mode\n";
@@ -84,5 +92,5 @@ int main(){
 #else
     std::cout<<"La definizione non ha funzionato\n";
 #endif
-    main1();
+    mainGui();
 }
