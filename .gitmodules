@@ -4,6 +4,9 @@
 [submodule "libs/gtest"]
 	path = libs/gtest
 	url = https://github.com/google/googletest.git
-[submodule "libs/small-gui"]
-	path = libs/small-gui
-	url = https://github.com/tekknolagi/full-beans.git
+[submodule "libs/imgui"]
+	path = libs/imgui
+	url = https://github.com/ocornut/imgui.git
+[submodule "libs/GLFW"]
+	path = libs/GLFW
+	url = https://github.com/glfw/glfw.git

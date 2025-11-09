@@ -13,16 +13,45 @@ add_subdirectory(libs/gtest)
 add_subdirectory(core-lib)
 add_subdirectory(libs/abseil-cpp)
 
-
 set(my_includes_dir src/include)
 set(my_impl_dir src/implementation)
 
-add_library(small-gui STATIC
-libs/small-gui/microui.c
-libs/small-gui/renderer.c)
+link_directories(
+  libs/GLFW/build/src/Debug
+)
+
+
+add_library(imgui STATIC
+libs/imgui/imgui.cpp
+libs/imgui/imgui_demo.cpp
+libs/imgui/imgui_draw.cpp
+libs/imgui/imgui_tables.cpp
+libs/imgui/imgui_widgets.cpp
+libs/imgui/backends/imgui_impl_glfw.cpp
+libs/imgui/backends/imgui_impl_opengl3.cpp
+libs/imgui/misc/cpp/imgui_stdlib.cpp
+)
+
+add_library(stb STATIC
+  libs/stb/stb_image.cpp
+)
+
+target_include_directories(imgui
+PRIVATE
+libs/imgui
+libs/imgui/backends
+libs/imgui/misc
+libs/GLFW/include
+)
+
+target_include_directories(stb
+PRIVATE
+libs/stb
+)
 
 add_executable(main 
-${my_impl_dir}/main_noiaFattaBene.cpp)
+${my_impl_dir}/main_noiaFattaBene.cpp
+${my_impl_dir}/TournamentBuilderGui.cpp)
 
 
 target_compile_definitions(main 
@@ -46,11 +75,27 @@ PRIVATE
 ${my_includes_dir}
 libs
 core-lib/include
+libs/imgui
+libs/imgui/backends
+libs/imgui/misc/cpp
+libs/GLFW/include
+libs/stb
 ${test_dir})
 
 
+
 # Declare dependency on the absl::strings library
-target_link_libraries(main tournament-build-core-lib small-gui absl::flat_hash_set absl::hash absl::btree)
+target_link_libraries(main 
+tournament-build-core-lib 
+imgui
+glfw3
+stb
+absl::flat_hash_set 
+absl::hash absl::btree)
+
+target_link_libraries(imgui
+glfw3
+)
 
 # Add the tests directory
 add_subdirectory(tests)
