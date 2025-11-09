@@ -21,6 +21,7 @@
 #include "Config.h"
 #include "TournamentConfig.h"
 #include "strat.h"
+#include "TournamentBuilderGui.h"
 
 std::string formatDurationDetailed(std::chrono::nanoseconds ns) {
     using namespace std::chrono;
@@ -59,10 +60,10 @@ void timeThis(LambdaToTime l){
     std::cout << "Moves generation took " << formatDurationDetailed(end-start) << "\n";
 }
 
-void main1() {
+void main1(std::string csv_path) {
 
     SetConsoleOutputCP(CP_UTF8); //changing windows console decoding to utf8
-    CSVRows rows = readCSV(TEST_FILE_DIR.data());
+    CSVRows rows = readCSV(csv_path);
     PlayerList player_list = formatRowsToPlayerList(rows);
     int n_teams = static_cast<int>(player_list.size() / N_PLAYERS);
     Config config=Config(player_list, n_teams, N_PLAYERS);
@@ -76,13 +77,7 @@ void main1() {
 
 void main_test();
 
-#include "small-gui-cpp.h"
-#include <memory>
 
-void mainGui(){
-    r_init();
-    std::unique_ptr<mu_Context> xtx= std::unique_ptr<mu_Context>((mu_Context*) malloc(sizeof(mu_Context)));
-}
 
 int main(){
 #ifdef MIO_DEBUG
