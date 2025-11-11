@@ -11,7 +11,8 @@ class Config{
 public:
     friend class TournamentConfig;
 public:
-    Config(const PlayerList&, std::size_t n_rows, std::size_t n_cols);
+    Config(std::size_t n_rows, std::size_t n_cols);
+    bool init(const PlayerList&);
     operator std::string();
     std::string obj_to_string(){return (std::string)(*this);}
     inline constexpr TeamArray& operator[](std::size_t index){return m_team_views[index];}

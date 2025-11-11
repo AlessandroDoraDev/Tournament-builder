@@ -2,6 +2,7 @@
 #include <format>
 #include <iomanip>
 #include <sstream>
+#include "globals.h"
 
 std::string to_string(const Rank& rank){
     return std::to_string(static_cast<int>(rank));
@@ -11,7 +12,7 @@ std::string to_string(const Rank& rank){
 std::string to_string(const Player& player){
     return std::format("({}, {})", 
         player.name, 
-        to_string(player.rank));
+        ENUM_RANK_TO_STRING_MAP.at(player.rank));
 }
 
 std::string round_to_string(double value, int n) {

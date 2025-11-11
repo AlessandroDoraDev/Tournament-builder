@@ -4,10 +4,9 @@ project(my_project LANGUAGES C CXX)
 
 set(CMAKE_CXX_STANDARD 23)
 
-# Enable testing for the project
+include(CTest)
 enable_testing()
 
-# Add Google Test
 add_subdirectory(libs/gtest)
 
 add_subdirectory(core-lib)
@@ -51,7 +50,9 @@ libs/stb
 
 add_executable(main 
 ${my_impl_dir}/main_noiaFattaBene.cpp
-${my_impl_dir}/TournamentBuilderGui.cpp)
+${my_impl_dir}/TournamentBuilderGui.cpp
+${my_impl_dir}/TournamentBuilderAPI.cpp
+tests/utils.cpp)
 
 
 target_compile_definitions(main 
@@ -80,11 +81,11 @@ libs/imgui/backends
 libs/imgui/misc/cpp
 libs/GLFW/include
 libs/stb
+tests/
 ${test_dir})
 
 
 
-# Declare dependency on the absl::strings library
 target_link_libraries(main 
 tournament-build-core-lib 
 imgui
@@ -97,5 +98,34 @@ target_link_libraries(imgui
 glfw3
 )
 
-# Add the tests directory
-add_subdirectory(tests)
+set(test_dir tests)
+
+add_executable(test_target
+    ${test_dir}/main_test.cpp
+    ${test_dir}/utils.cpp
+)
+
+target_include_directories(test_target
+    PRIVATE
+    ${CMAKE_SOURCE_DIR}/libs/gtest/googletest/include
+    ${CMAKE_SOURCE_DIR}/libs/gtest/googlemock/include
+    ${CMAKE_SOURCE_DIR}/${my_includes_dir}
+    ${test_dir}
+    ${CMAKE_SOURCE_DIR}/core-lib/include
+)
+
+link_directories(test_target
+    ../out/build/MSVC_ConfigPreset/core-lib/Release
+)
+
+target_link_libraries(test_target 
+    PRIVATE
+    GTest::gtest_main
+    absl::flat_hash_set 
+    absl::hash 
+    absl::btree
+    tournament-build-core-lib
+)
+
+include(GoogleTest)
+gtest_discover_tests(test_target)

@@ -23,11 +23,11 @@ TournamentConfig::operator std::string(){
     double min_pnts=0;
     for(int i=0; i<m_n_rows; i++){
         int team_pnts=0;
-        res+="[";
+        res+="[\n";
         for(int j=0; j<m_n_cols; j++){
             const Player& p= m_config[i*m_n_cols+j];
             team_pnts+=static_cast<int>(p.rank);
-            res+=std::format("{:<25}", to_string(p))+", ";
+            res+=std::format("{:<25}", to_string(p))+"\n";
         }
         res+="\b\b] ("
         +round_to_string(((double)team_pnts)/m_n_cols, 1)

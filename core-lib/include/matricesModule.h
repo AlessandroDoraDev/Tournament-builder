@@ -22,6 +22,8 @@
 
 CSVRows readCSV(const std::string& filename);
 
+bool initRankMaps(const CSVRows& rank_rows);
+
 PlayerList formatRowsToPlayerList(const CSVRows& rows);
 
 template<typename T>

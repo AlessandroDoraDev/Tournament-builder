@@ -14,6 +14,8 @@
 #include <unordered_set>
 #include <unordered_map>
 #include "Config.h"
+#include <numeric>
+#include <vector>
 
 #define R_INT(r) static_cast<int>(r)
 
@@ -22,19 +24,28 @@ using Triplet= absl::btree_multiset<std::size_t>;
 struct TripletHash{
     size_t operator()(Triplet const& t) const noexcept {return absl::Hash<Triplet>{}(t);}
 };
+struct TripletPtrHash{
+    size_t operator()(Triplet* const& t) const noexcept {return absl::Hash<Triplet>{}(*t);}
+};
 
 struct TripletEq{
     bool operator()(Triplet const& t1, Triplet const& t2) const noexcept {return t1==t2;}
 };
+struct TripletPtrEq{
+    bool operator()(Triplet* const& t1, Triplet* const& t2) const noexcept {return *t1==*t2;}
+};
 
 using IndexesArray= std::array<std::size_t, ROTATION_SIZE>;
+using RIndexesArray= std::array<std::size_t, ROTATION_SIZE>;
 using SymbolsArray= std::array<char, ROTATION_SIZE>;
 using RankMoveSumArray= std::array<int, ROTATION_SIZE>;
 #ifdef MIO_DEBUG
+    using TripletPtrSet= std::unordered_set<Triplet*, TripletPtrHash, TripletPtrEq>;
     using TripletSet= std::unordered_set<Triplet, TripletHash, TripletEq>;
     using RankMoveSumMap= std::unordered_map<std::size_t, int>;
     using PntsMap= std::unordered_map<std::size_t, int>;
 #else
+    using TripletPtrSet= absl::flat_hash_set<Triplet*>; 
     using TripletSet= absl::flat_hash_set<Triplet>;
     using RankMoveSumMap= absl::flat_hash_map<std::size_t, int>;
     using PntsMap= absl::flat_hash_map<std::size_t, int>;
@@ -46,9 +57,19 @@ void incrementSelectedIndexesByOne(IndexesArray& selected_indexes, std::size_t r
     std::size_t i=0;
     std::size_t end=selected_indexes.size();
     while(carry&&i<end){
-        selected_indexes[i]++;
-        if(selected_indexes[i]==roof){
-            selected_indexes[i]=0;
+        std::size_t curr_roof;
+        std::size_t curr_starter;
+        if((i&1)==0){
+            curr_roof=roof;
+            selected_indexes[i]++;
+            curr_starter=0;
+        }else{
+            curr_roof=-1; //0 -1, bc 0 has to get counted too
+            selected_indexes[i]--;
+            curr_starter=roof-1;
+        }
+        if(selected_indexes[i]==curr_roof){
+            selected_indexes[i]=curr_starter;
             i++;
         }else{
             carry=false;
@@ -108,13 +129,13 @@ bool deduceAndApplyOnceMove(Config& config, IndexesArray& selected_indexes, cons
         return acc+std::abs(dist.second-ecc);
     });
     
-    std::array<std::size_t, ROTATION_SIZE> selected_r_indexes;
+    RIndexesArray selected_r_indexes;
     std::fill(selected_r_indexes.begin(), selected_r_indexes.end(), 0);
 
     MoveArrT<ROTATION_SIZE> best_move;
     int best_pnts=orig_sum;
 
-    auto is_end=[&config](std::size_t e){return e==0;};
+    auto is_end=[&config](std::size_t e){return e==0;}; //eventually iteration will reset to all zeros, so we can exit on all zeros since we don't need to check it.
     PntsMap orig_pnts;
     for(int i=0; i<ROTATION_SIZE; i++){
         orig_pnts[selected_indexes[i]]=config[selected_indexes[i]].getPnts();
@@ -159,32 +180,61 @@ bool deduceAndApplyOnceMove(Config& config, IndexesArray& selected_indexes, cons
 
 }
 
+
 void deduceAndApplyMoves(Config& config){
     #define SELECTED_INDEXES_RANGE selected_indexes.begin(), selected_indexes.end()
+    struct IndexesArrayAndTriplet{
+        IndexesArray selected_indx;
+        Triplet triplet;
+    };
+    std::vector<IndexesArrayAndTriplet> indexes_config_sequence;
     IndexesArray selected_indexes;
+    
+    const std::size_t& n= config.n_rows;
+    const std::size_t r= selected_indexes.size();
+    indexes_config_sequence.reserve(
+        std::pow(n+r-1, r-1)
+    );
     const std::size_t roof= config.n_rows;
     const double ecc=config.avg_rank-static_cast<int>(config.avg_rank) > 0?1:0;
-    auto equalToRoofFunc=[roof](std::size_t index){return index==roof-1;};
+    auto equalToRoofFunc=[roof](std::size_t index){return index==roof-1||index==-1;};
     auto allSelectedIndexesEqualFunc=[&selected_indexes](std::size_t i){return i==selected_indexes[0];};
-
-    std::fill(SELECTED_INDEXES_RANGE, 0);
+    
+    for(std::size_t i=0; i<selected_indexes.size(); i++){
+        if((i&1)==0){
+            selected_indexes[i]=0;
+        }else{
+            selected_indexes[i]=roof-1;
+        }
+    }
+    std::size_t i=0;
     TripletSet explored_triplets;
-    while(!std::all_of(SELECTED_INDEXES_RANGE, equalToRoofFunc)){
+    while(!std::all_of(selected_indexes.begin(), selected_indexes.end(), equalToRoofFunc)){
         Triplet t;
         t.insert(selected_indexes.begin(), selected_indexes.end());
-        bool all_indexes_equal=std::all_of(SELECTED_INDEXES_RANGE, allSelectedIndexesEqualFunc);
+        bool all_indexes_equal=std::all_of(
+            selected_indexes.begin(), 
+            selected_indexes.end(), 
+            allSelectedIndexesEqualFunc);
         if(!explored_triplets.contains(t) && !all_indexes_equal){
             explored_triplets.emplace(t);
-            bool moveSucceded=deduceAndApplyOnceMove(config, selected_indexes, ecc);
+            indexes_config_sequence.emplace_back(selected_indexes, t);
+        }
+        incrementSelectedIndexesByOne(selected_indexes, roof);
+    }
+    TripletPtrSet explored_triplet_ptrs;
+    std::vector<IndexesArrayAndTriplet>::iterator it=indexes_config_sequence.begin();
+    std::vector<IndexesArrayAndTriplet>::iterator end=indexes_config_sequence.end();
+    while(it!=end){
+        if(!explored_triplet_ptrs.contains(&it->triplet)){
+            explored_triplet_ptrs.emplace(&it->triplet);
+            bool moveSucceded=deduceAndApplyOnceMove(config, it->selected_indx, ecc);
             if(moveSucceded){
-                std::fill(SELECTED_INDEXES_RANGE, 0);
-                explored_triplets.clear();
-                Triplet t;        
-                t.insert(selected_indexes.begin(), selected_indexes.end());
-                explored_triplets.emplace(t);
+                it=indexes_config_sequence.begin();
+                explored_triplet_ptrs.clear();
+                explored_triplet_ptrs.emplace(&it->triplet);
             }
         }
-        //std::this_thread::sleep_for(std::chrono::seconds(1));
-        incrementSelectedIndexesByOne(selected_indexes, roof);
+        ++it;
     }
 }
