@@ -3,10 +3,14 @@
 #include <iterator>
 #include "to_strings.h"
 
-Config::Config(const PlayerList& player_list, std::size_t m_n_rows, std::size_t m_n_cols)
-: m_n_rows(m_n_rows), m_n_cols(m_n_cols){
+Config::Config(std::size_t n_rows, std::size_t n_cols)
+: m_n_rows(n_rows), m_n_cols(n_cols){
+
+}
+
+bool Config::init(const PlayerList& player_list){
     if(m_n_rows*m_n_cols!=player_list.size()){
-        return;
+        return false;
     }
     m_config_matrix.reserve(player_list.size());
     std::transform(player_list.begin(), player_list.end(), std::back_inserter(m_config_matrix),
@@ -26,6 +30,7 @@ Config::Config(const PlayerList& player_list, std::size_t m_n_rows, std::size_t 
     m_at_least_pnts_per_team=total_points/m_n_rows;
     m_avg_rank=static_cast<double>(total_points)/(m_n_rows*m_n_cols);
     sort();
+    return true;
 }
 
 Config::operator std::string(){

@@ -11,8 +11,7 @@
 #include "imgui_stdlib.h"
 #include "stb_image.h"
 #include <regex>
-
-void main1(std::string csv_path);
+#include "TournamentBuilderAPI.h"
 
 static const size_t WINDOW_WIDTH=1280/2;
 static const size_t WINDOW_HEIGHT=800/4;
@@ -205,7 +204,7 @@ void SmallGui::render(size_t width, size_t height, GLFWwindow* window){
     if(ImGui::Button("Build this tournament!!")&&!droppedFilePath.empty()){
         if(std::filesystem::exists(droppedFilePath)){
             caught_nonexistingfile_error=false;
-            main1(droppedFilePath);
+            //buildTournamentFromCSV(droppedFilePath);
         }else{
             caught_nonexistingfile_error=true;
         }
