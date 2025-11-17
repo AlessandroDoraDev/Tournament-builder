@@ -48,12 +48,15 @@ PRIVATE
 libs/stb
 )
 
-add_executable(main 
+add_executable(main WIN32
 ${my_impl_dir}/main_noiaFattaBene.cpp
 ${my_impl_dir}/TournamentBuilderGui.cpp
 ${my_impl_dir}/TournamentBuilderAPI.cpp
 tests/utils.cpp)
 
+if (MSVC)
+  target_link_options(main PRIVATE "/SUBSYSTEM:WINDOWS" "/ENTRY:mainCRTStartup")
+endif()
 
 target_compile_definitions(main 
 PRIVATE 
