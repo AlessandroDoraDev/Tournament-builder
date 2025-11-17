@@ -1,10 +1,27 @@
 #pragma once
 #include <memory>
 #include <functional>
+#include <filesystem>
+#include <vector>
+#include <cstddef>
+#include <regex>
+#include <string>
 #include "GLFW/glfw3.h"
+#include "imgui.h"
+#include "imgui_impl_glfw.h"
+#include "TournamentConfig.h"
+#include "Player.h"
+#include <utility>
 void mainGui();
 
-
 namespace SmallGui{
-    void render(size_t width, size_t height, GLFWwindow* window);
-}
+    const ::std::size_t INPUT_WINDOW_WIDTH=1280/2;
+    const ::std::size_t INPUT_WINDOW_HEIGHT=800/4;
+    inline ::std::size_t result_window_width=0;
+    inline ::std::size_t result_window_height=0;
+    const std::string icons_path="../../../../assets";
+    const std::regex icon_pattern(R"(^icon\d+x\d+\.png$)");
+    void render(GLFWwindow* window);
+    std::pair<std::string, std::string> playerToCellString(const Player&);
+    ::std::vector<::std::filesystem::path> listMatchingFiles(const ::std::filesystem::path& dir, const ::std::regex& pattern);
+};

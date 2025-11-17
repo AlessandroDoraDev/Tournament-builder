@@ -57,6 +57,14 @@ TEST_P(CoreAlgorithmPerformance, PerfTest){
     EXPECT_LE(elapsed, expected)<<elapsed<<" >= "<< expected;
 }
 
+/*
+core lib API:
+readCSV
+initRankMaps
+formatRowsRoPlayerList
+global variables
+*/
+
 TEST_P(CoreAlgorithmDummy, DummyTest){
     std::string csv_path=std::get<0>(GetParam());
     std::string ranks_csv_path= std::get<1>(GetParam());

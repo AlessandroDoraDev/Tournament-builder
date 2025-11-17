@@ -7,19 +7,212 @@
 #include "TournamentBuilderGui.h"
 #include <string>
 #include <print>
-#include <filesystem>
 #include "imgui_stdlib.h"
 #include "stb_image.h"
-#include <regex>
 #include "TournamentBuilderAPI.h"
+#include <format>
+#include "globals.h"
 
-static const size_t WINDOW_WIDTH=1280/2;
-static const size_t WINDOW_HEIGHT=800/4;
-static const std::string icons_path="../../../../assets";
-static const std::regex icon_pattern(R"(^icon\d+x\d+\.png$)");
+static void glfw_error_callback(int error, const char* description)
+{
+    fprintf(stderr, "GLFW Error %d: %s\n", error, description);
+}
+
+// Main code
+void mainGui(){
+    glfwSetErrorCallback(glfw_error_callback);
+    if (!glfwInit())
+        return;
+    
+    const char* glsl_version = "#version 130";
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
+    
+    float main_scale = ImGui_ImplGlfw_GetContentScaleForMonitor(glfwGetPrimaryMonitor());
+    
+    GLFWwindow* window = glfwCreateWindow(
+        (int)(SmallGui::INPUT_WINDOW_WIDTH * main_scale), 
+        (int)(SmallGui::INPUT_WINDOW_HEIGHT * main_scale), 
+        "Tournament builder", 
+        nullptr, 
+        nullptr
+    );
+    if (window == nullptr)
+        return;
+    std::vector<std::filesystem::path> icon_paths=SmallGui::listMatchingFiles(SmallGui::icons_path, SmallGui::icon_pattern);
+    std::vector<GLFWimage> icons;
+    icons.reserve(5);
+    for(std::filesystem::path& path: icon_paths){
+        int width, height, desired_channels;
+        unsigned char* pixels= stbi_load(path.string().c_str(), &width, &height, &desired_channels, 4);
+        icons.emplace_back(width, height, pixels);
+    }
+    
+    glfwMakeContextCurrent(window);
+    glfwSwapInterval(1); // Enable vsync
+    
+    glfwSetWindowIcon(window, icons.size(), icons.data());
+    
+    IMGUI_CHECKVERSION();
+    ImGui::CreateContext();
+    ImGuiIO& io = ImGui::GetIO(); (void)io;
+    io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
+    io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;
+    
+    ImGui::StyleColorsDark();
+    
+    ImGuiStyle& style = ImGui::GetStyle();
+    style.ScaleAllSizes(main_scale);
+    style.FontScaleDpi = main_scale;
+    
+    ImGui_ImplGlfw_InitForOpenGL(window, true);
+    
+    ImGui_ImplOpenGL3_Init(glsl_version);
+    
+    bool show_demo_window = true;
+    bool show_another_window = false;
+    ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
+    
+    while (!glfwWindowShouldClose(window)){
+        glfwPollEvents();
+        if (glfwGetWindowAttrib(window, GLFW_ICONIFIED) != 0){
+            ImGui_ImplGlfw_Sleep(10);
+            continue;
+        }
+        
+        ImGui_ImplOpenGL3_NewFrame();
+        ImGui_ImplGlfw_NewFrame();
+        ImGui::NewFrame();
+           
+        SmallGui::render(window);
+        
+        ImGui::Render();
+        int display_w, display_h;
+        glfwGetFramebufferSize(window, &display_w, &display_h);
+        glViewport(0, 0, display_w, display_h);
+        glClearColor(clear_color.x * clear_color.w, clear_color.y * clear_color.w, clear_color.z * clear_color.w, clear_color.w);
+        glClear(GL_COLOR_BUFFER_BIT);
+        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+        
+        glfwSwapBuffers(window);
+    }
+    
+    ImGui_ImplOpenGL3_Shutdown();
+    ImGui_ImplGlfw_Shutdown();
+    ImGui::DestroyContext();
+    
+    glfwDestroyWindow(window);
+    glfwTerminate();
+}
+    
+    
+    
+void SmallGui::render(GLFWwindow* window){
+    static std::string player_list_path;
+    static std::string rank_list_path;
+    static bool caught_nonexistingfile_error_playerlist=false;
+    static bool caught_nonexistingfile_error_ranklist=false;
+    static bool accept_player_list_path;
+    accept_player_list_path=false;
+    static bool accept_rank_list_path;
+    accept_rank_list_path=false;
+    static bool build_button_pressed;
+    build_button_pressed=false;
+    static bool tournament_build_error=false;
+    static std::string tournament_build_error_msg="";
+    glfwSetDropCallback(window, 
+        [] (GLFWwindow* wnd, int count, const char* paths[]) {
+        if (count > 0) {
+            if(accept_player_list_path){
+                player_list_path = paths[0];
+                player_list_path+='\0';
+            }
+            if(accept_rank_list_path){
+                rank_list_path = paths[0];
+                rank_list_path+='\0';
+            }
+        }
+    });
+    ImGuiIO& io = ImGui::GetIO();
+    ImGui::SetNextWindowPos(ImVec2(0,0), ImGuiCond_Always);
+    ImGui::SetNextWindowSize(io.DisplaySize, ImGuiCond_Always);
+    
+    ImGui::Begin("Tournament Builder", nullptr,
+        ImGuiWindowFlags_NoTitleBar |
+        ImGuiWindowFlags_NoResize |
+        ImGuiWindowFlags_NoMove |
+        ImGuiWindowFlags_NoCollapse);
+        
+        
+    ImGui::InputText("Player list path", &player_list_path);
+    if(ImGui::IsItemHovered()){
+        accept_player_list_path=true;
+    }
+    ImGui::NewLine();
+    ImGui::InputText("Rank list path", &rank_list_path);
+    if(ImGui::IsItemHovered()){
+        accept_rank_list_path=true;
+    }
+    ImGui::NewLine();
+    if(ImGui::Button("Build this tournament!!")){
+        if(!player_list_path.empty()){
+            if(std::filesystem::exists(player_list_path)){
+                caught_nonexistingfile_error_playerlist=false;
+            }else{
+                caught_nonexistingfile_error_playerlist=true;
+            }
+        }
+        if(!rank_list_path.empty()){
+            if(std::filesystem::exists(rank_list_path)){
+                caught_nonexistingfile_error_ranklist=false;
+            }else{
+                caught_nonexistingfile_error_ranklist=true;
+            }
+        }
+        build_button_pressed=true;
+    }
+    if(caught_nonexistingfile_error_playerlist){
+        ImGui::NewLine();
+        ImGui::Text("Player list file does not exist");
+    }
+    
+    if(caught_nonexistingfile_error_ranklist){
+        ImGui::NewLine();
+        ImGui::Text("Rank list file does not exist");
+    }
+    
+    if( build_button_pressed
+        && !caught_nonexistingfile_error_ranklist && !player_list_path.empty()
+        && !caught_nonexistingfile_error_playerlist && !rank_list_path.empty()){
+        BuildTournamentResult build_res= buildTournamentFromCSV(player_list_path, rank_list_path);
+        if(build_res.error_code!=GOOD_TOURNAMENT_RESULT){
+            ImGui::NewLine();
+            tournament_build_error_msg.clear();
+            tournament_build_error_msg=
+            ERROR_MESSAGE_MAP.at(build_res.error_code)
+            +"\nIf you can't find the cause, submit a ticket or an issue to the software mantainer.";
+            tournament_build_error=true;
+        }else{
+            tournament_build_error=false;
+            build_res.tournament_config;
+            build_res.tournament_config.genHTMLTable("D:\\VSCodeScripts\\D\\cpp_version\\assets\\res.html");
+        }
+    }
+    if(tournament_build_error){
+        ImGui::Text("%s", tournament_build_error_msg.c_str());
+    }
+    
+    ImGui::End();
+}
+
+
+std::pair<std::string, std::string> SmallGui::playerToCellString(const Player& p){
+    return std::make_pair(p.name, ENUM_RANK_TO_STRING_MAP.at(p.rank));
+}
+
 
 std::vector<std::filesystem::path> 
-listMatchingFiles(const std::filesystem::path& dir, const std::regex& pattern){
+SmallGui::listMatchingFiles(const std::filesystem::path& dir, const std::regex& pattern){
     std::vector<std::filesystem::path> results;
     if (!std::filesystem::exists(dir) || !std::filesystem::is_directory(dir))
         return results;
@@ -34,185 +227,4 @@ listMatchingFiles(const std::filesystem::path& dir, const std::regex& pattern){
     }
 
     return results;
-}
-
-static void glfw_error_callback(int error, const char* description)
-{
-    fprintf(stderr, "GLFW Error %d: %s\n", error, description);
-}
-
-// Main code
-void mainGui()
-{
-    glfwSetErrorCallback(glfw_error_callback);
-    if (!glfwInit())
-        return;
-    // GL 3.0 + GLSL 130
-    const char* glsl_version = "#version 130";
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
-    //glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);  // 3.2+ only
-    //glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);            // 3.0+ only
-
-    // Create window with graphics context
-    float main_scale = ImGui_ImplGlfw_GetContentScaleForMonitor(glfwGetPrimaryMonitor()); // Valid on GLFW 3.3+ only
-    GLFWwindow* window = glfwCreateWindow((int)(WINDOW_WIDTH * main_scale), (int)(WINDOW_HEIGHT * main_scale), "Tournament builder", nullptr, nullptr);
-    if (window == nullptr)
-        return;
-    std::vector<std::filesystem::path> icon_paths=listMatchingFiles(icons_path, icon_pattern);
-    std::vector<GLFWimage> icons;
-    icons.reserve(5);
-    for(std::filesystem::path& path: icon_paths){
-        int width, height, desired_channels;
-        unsigned char* pixels= stbi_load(path.string().c_str(), &width, &height, &desired_channels, 4);
-        icons.emplace_back(width, height, pixels);
-    }
-
-    glfwMakeContextCurrent(window);
-    glfwSwapInterval(1); // Enable vsync
-
-    glfwSetWindowIcon(window, icons.size(), icons.data());
-    // for(GLFWimage& icon: icons){
-    //     stbi_image_free(icon.pixels);
-    // }
-
-    // Setup Dear ImGui context
-    IMGUI_CHECKVERSION();
-    ImGui::CreateContext();
-    ImGuiIO& io = ImGui::GetIO(); (void)io;
-    io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
-    io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
-
-    // Setup Dear ImGui style
-    ImGui::StyleColorsDark();
-    //ImGui::StyleColorsLight();
-
-    // Setup scaling
-    ImGuiStyle& style = ImGui::GetStyle();
-    style.ScaleAllSizes(main_scale);        // Bake a fixed style scale. (until we have a solution for dynamic style scaling, changing this requires resetting Style + calling this again)
-    style.FontScaleDpi = main_scale;        // Set initial font scale. (using io.ConfigDpiScaleFonts=true makes this unnecessary. We leave both here for documentation purpose)
-
-    // Setup Platform/Renderer backends
-    ImGui_ImplGlfw_InitForOpenGL(window, true);
-
-    ImGui_ImplOpenGL3_Init(glsl_version);
-
-    // Our state
-    bool show_demo_window = true;
-    bool show_another_window = false;
-    ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
-
-    while (!glfwWindowShouldClose(window))
-    {
-        glfwPollEvents();
-        if (glfwGetWindowAttrib(window, GLFW_ICONIFIED) != 0)
-        {
-            ImGui_ImplGlfw_Sleep(10);
-            continue;
-        }
-
-        // Start the Dear ImGui frame
-        ImGui_ImplOpenGL3_NewFrame();
-        ImGui_ImplGlfw_NewFrame();
-        ImGui::NewFrame();
-/*
-        // 1. Show the big demo window (Most of the sample code is in ImGui::ShowDemoWindow()! You can browse its code to learn more about Dear ImGui!).
-        if (show_demo_window)
-            ImGui::ShowDemoWindow(&show_demo_window);
-
-        // 2. Show a simple window that we create ourselves. We use a Begin/End pair to create a named window.
-        {
-            static float f = 0.0f;
-            static int counter = 0;
-
-            ImGui::Begin("Hello, world!");                          // Create a window called "Hello, world!" and append into it.
-
-            ImGui::Text("This is some useful text.");               // Display some text (you can use a format strings too)
-            ImGui::Checkbox("Demo Window", &show_demo_window);      // Edit bools storing our window open/close state
-            ImGui::Checkbox("Another Window", &show_another_window);
-
-            ImGui::SliderFloat("float", &f, 0.0f, 1.0f);            // Edit 1 float using a slider from 0.0f to 1.0f
-            ImGui::ColorEdit3("clear color", (float*)&clear_color); // Edit 3 floats representing a color
-
-            if (ImGui::Button("Button"))                            // Buttons return true when clicked (most widgets return true when edited/activated)
-                counter++;
-            ImGui::SameLine();
-            ImGui::Text("counter = %d", counter);
-
-            ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / io.Framerate, io.Framerate);
-            ImGui::End();
-        }
-
-        // 3. Show another simple window.
-        if (show_another_window)
-        {
-            ImGui::Begin("Another Window", &show_another_window);   // Pass a pointer to our bool variable (the window will have a closing button that will clear the bool when clicked)
-            ImGui::Text("Hello from another window!");
-            if (ImGui::Button("Close Me"))
-                show_another_window = false;
-            ImGui::End();
-        }
-*/
-        
-        SmallGui::render(WINDOW_WIDTH, WINDOW_HEIGHT, window);
-
-        // Rendering
-        ImGui::Render();
-        int display_w, display_h;
-        glfwGetFramebufferSize(window, &display_w, &display_h);
-        glViewport(0, 0, display_w, display_h);
-        glClearColor(clear_color.x * clear_color.w, clear_color.y * clear_color.w, clear_color.z * clear_color.w, clear_color.w);
-        glClear(GL_COLOR_BUFFER_BIT);
-        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-
-        glfwSwapBuffers(window);
-    }
-
-    // Cleanup
-    ImGui_ImplOpenGL3_Shutdown();
-    ImGui_ImplGlfw_Shutdown();
-    ImGui::DestroyContext();
-
-    glfwDestroyWindow(window);
-    glfwTerminate();
-}
-
-
-
-void SmallGui::render(size_t width, size_t height, GLFWwindow* window){
-    static std::string droppedFilePath;
-    static bool caught_nonexistingfile_error=false;
-    glfwSetDropCallback(window, [](GLFWwindow* wnd, int count, const char* paths[]) {
-        if (count > 0) {
-            droppedFilePath = paths[0];
-            droppedFilePath+='\0';
-        }
-    });
-    ImGuiIO& io = ImGui::GetIO();
-    ImGui::SetNextWindowPos(ImVec2(0,0), ImGuiCond_Always);
-    ImGui::SetNextWindowSize(io.DisplaySize, ImGuiCond_Always);
-
-    ImGui::Begin("MyWindow", nullptr,
-        ImGuiWindowFlags_NoTitleBar |
-        ImGuiWindowFlags_NoResize |
-        ImGuiWindowFlags_NoMove |
-        ImGuiWindowFlags_NoCollapse);
-
-
-    ImGui::InputText("Path", &droppedFilePath);
-    ImGui::NewLine();
-    if(ImGui::Button("Build this tournament!!")&&!droppedFilePath.empty()){
-        if(std::filesystem::exists(droppedFilePath)){
-            caught_nonexistingfile_error=false;
-            //buildTournamentFromCSV(droppedFilePath);
-        }else{
-            caught_nonexistingfile_error=true;
-        }
-    }
-    if(caught_nonexistingfile_error){
-        ImGui::NewLine();
-        ImGui::Text("File does not exist");
-    }
-    
-    ImGui::End();
 }
