@@ -16,10 +16,10 @@ void mainGui();
 
 namespace SmallGui{
     const ::std::size_t INPUT_WINDOW_WIDTH=1280/2;
-    const ::std::size_t INPUT_WINDOW_HEIGHT=800/4;
+    const ::std::size_t INPUT_WINDOW_HEIGHT=1280/4;
     inline ::std::size_t result_window_width=0;
     inline ::std::size_t result_window_height=0;
-    const std::string icons_path="../../../../assets";
+    const std::string icons_path="icons/";
     const std::regex icon_pattern(R"(^icon\d+x\d+\.png$)");
     void render(GLFWwindow* window);
     std::pair<std::string, std::string> playerToCellString(const Player&);

@@ -35,10 +35,10 @@ struct TripletPtrEq{
     bool operator()(Triplet* const& t1, Triplet* const& t2) const noexcept {return *t1==*t2;}
 };
 
-using IndexesArray= std::array<std::size_t, ROTATION_SIZE>;
-using RIndexesArray= std::array<std::size_t, ROTATION_SIZE>;
-using SymbolsArray= std::array<char, ROTATION_SIZE>;
-using RankMoveSumArray= std::array<int, ROTATION_SIZE>;
+using IndexesArray= absl::FixedArray<std::size_t>;
+using RIndexesArray= absl::FixedArray<std::size_t>;
+using SymbolsArray= absl::FixedArray<char>;
+using RankMoveSumArray= absl::FixedArray<int>;
 #ifdef MIO_DEBUG
     using TripletPtrSet= std::unordered_set<Triplet*, TripletPtrHash, TripletPtrEq>;
     using TripletSet= std::unordered_set<Triplet, TripletHash, TripletEq>;
@@ -77,10 +77,10 @@ void incrementSelectedIndexesByOne(IndexesArray& selected_indexes, std::size_t r
     }
 }
 
-void incrementSelectedRIndexesByOne(std::array<std::size_t, ROTATION_SIZE>& selected_r_indexes, Config& config, IndexesArray& selected_indexes){
+void incrementSelectedRIndexesByOne(RIndexesArray& selected_r_indexes, Config& config, IndexesArray& selected_indexes){
     std::size_t i=0;
     bool carry=true;
-    while(carry&&i<ROTATION_SIZE){
+    while(carry&&i<selected_r_indexes.size()){
         //++
         Rank curr_rank=config[selected_indexes[i]][selected_r_indexes[i]];
         do{
@@ -98,7 +98,8 @@ void incrementSelectedRIndexesByOne(std::array<std::size_t, ROTATION_SIZE>& sele
 }
 
 bool deduceAndApplyOnceMove(Config& config, IndexesArray& selected_indexes, const double ecc){
-    SymbolsArray team_status;
+    const std::size_t& rotation_size=selected_indexes.size();
+    SymbolsArray team_status(rotation_size);
     std::transform(selected_indexes.begin(), selected_indexes.end(), team_status.begin(),
     [&config](std::size_t index){
         int pnts= config[index].getPnts();
@@ -111,16 +112,18 @@ bool deduceAndApplyOnceMove(Config& config, IndexesArray& selected_indexes, cons
         }
     });
     bool all_symbols_eq=std::all_of(team_status.begin(), team_status.end(), 
-        [&team_status](char s){return s==team_status[0];});
+        [&team_status](char s){return s==team_status[0];}
+    );
+
     if(all_symbols_eq){
         return false;
     }
-    RankMoveSumArray orig_sum_array;
+    RankMoveSumArray orig_sum_array(rotation_size);
     RankMoveSumMap orig_sum_map;
-    for(int i=0; i<ROTATION_SIZE; i++){
+    for(std::size_t i=0; i<rotation_size; i++){
         orig_sum_array[i]= config[selected_indexes[i]].getPnts()-config.at_least_pnts_per_team;
     }
-    for(int i=0; i<ROTATION_SIZE; i++){
+    for(std::size_t i=0; i<rotation_size; i++){
         orig_sum_map[selected_indexes[i]]=orig_sum_array[i];
     }
     int orig_sum=std::accumulate(orig_sum_map.begin(), orig_sum_map.end(), 0,
@@ -129,24 +132,24 @@ bool deduceAndApplyOnceMove(Config& config, IndexesArray& selected_indexes, cons
         return acc+std::abs(dist.second-ecc);
     });
     
-    RIndexesArray selected_r_indexes;
+    RIndexesArray selected_r_indexes(rotation_size);
     std::fill(selected_r_indexes.begin(), selected_r_indexes.end(), 0);
 
-    MoveArrT<ROTATION_SIZE> best_move;
+    MoveArrT best_move(rotation_size);
     int best_pnts=orig_sum;
 
     auto is_end=[&config](std::size_t e){return e==0;}; //eventually iteration will reset to all zeros, so we can exit on all zeros since we don't need to check it.
     PntsMap orig_pnts;
-    for(int i=0; i<ROTATION_SIZE; i++){
+    for(int i=0; i<rotation_size; i++){
         orig_pnts[selected_indexes[i]]=config[selected_indexes[i]].getPnts();
     }
     do{
         RankMoveSumMap sum_map=orig_sum_map;
         PntsMap pnts=orig_pnts;
 
-        for(int i=0; i<ROTATION_SIZE; i++){
+        for(int i=0; i<rotation_size; i++){
             int next_i= i+1;
-            if(next_i==ROTATION_SIZE){
+            if(next_i==rotation_size){
                 next_i=0;
             }
             int curr_movement=R_INT(config[selected_indexes[i]][selected_r_indexes[i]]);
@@ -164,13 +167,13 @@ bool deduceAndApplyOnceMove(Config& config, IndexesArray& selected_indexes, cons
         int move_pnts= std::accumulate(sum_map.begin(), sum_map.end(), 0,
             [](int acc, std::pair<std::size_t, int> dist){ return acc+std::abs(dist.second);});
         if(move_pnts<best_pnts){
-            for(int i=0; i<ROTATION_SIZE; i++){
+            for(int i=0; i<rotation_size; i++){
                 best_move[i]={selected_indexes[i], config[selected_indexes[i]][selected_r_indexes[i]]};
             }
             best_pnts=move_pnts;
         }
         incrementSelectedRIndexesByOne(selected_r_indexes, config, selected_indexes);
-    }while(!all_of(selected_r_indexes.begin(), selected_r_indexes.end(), is_end));
+    }while(!std::all_of(selected_r_indexes.begin(), selected_r_indexes.end(), is_end));
     
     if(best_pnts==orig_sum){
         return false;
@@ -181,14 +184,14 @@ bool deduceAndApplyOnceMove(Config& config, IndexesArray& selected_indexes, cons
 }
 
 
-void deduceAndApplyMoves(Config& config){
+void deduceAndApplyMoves(Config& config, std::size_t rotation_size){
     #define SELECTED_INDEXES_RANGE selected_indexes.begin(), selected_indexes.end()
     struct IndexesArrayAndTriplet{
         IndexesArray selected_indx;
         Triplet triplet;
     };
     std::vector<IndexesArrayAndTriplet> indexes_config_sequence;
-    IndexesArray selected_indexes;
+    IndexesArray selected_indexes(rotation_size);
     
     const std::size_t& n= config.n_rows;
     const std::size_t r= selected_indexes.size();

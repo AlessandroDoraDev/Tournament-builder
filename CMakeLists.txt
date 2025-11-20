@@ -52,6 +52,7 @@ add_executable(main WIN32
 ${my_impl_dir}/main_noiaFattaBene.cpp
 ${my_impl_dir}/TournamentBuilderGui.cpp
 ${my_impl_dir}/TournamentBuilderAPI.cpp
+${my_impl_dir}/WindowsDefs.cpp
 tests/utils.cpp)
 
 if (MSVC)
@@ -95,7 +96,16 @@ imgui
 glfw3
 stb
 absl::flat_hash_set 
-absl::hash absl::btree)
+absl::hash absl::btree
+absl::fixed_array)
+
+add_custom_command(
+  TARGET main
+  POST_BUILD
+  COMMAND ${CMAKE_COMMAND} -E copy_directory
+    "${CMAKE_CURRENT_SOURCE_DIR}/icons"
+    "$<TARGET_FILE_DIR:main>/icons"
+)
 
 target_link_libraries(imgui
 glfw3

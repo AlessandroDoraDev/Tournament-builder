@@ -13,6 +13,15 @@
 #include <format>
 #include "globals.h"
 
+
+bool accept_player_list_path;
+bool accept_result_directory_path;
+bool accept_rank_list_path;
+static std::string player_list_path;
+static std::string rank_list_path;
+static std::string result_directory=std::filesystem::current_path().string();
+
+
 static void glfw_error_callback(int error, const char* description)
 {
     fprintf(stderr, "GLFW Error %d: %s\n", error, description);
@@ -23,10 +32,10 @@ void mainGui(){
     glfwSetErrorCallback(glfw_error_callback);
     if (!glfwInit())
         return;
-    
-    const char* glsl_version = "#version 130";
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
+        const char* glsl_version = "#version 130";
+        glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+        glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
+        glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
     
     float main_scale = ImGui_ImplGlfw_GetContentScaleForMonitor(glfwGetPrimaryMonitor());
     
@@ -50,6 +59,24 @@ void mainGui(){
     
     glfwMakeContextCurrent(window);
     glfwSwapInterval(1); // Enable vsync
+
+    glfwSetDropCallback(window, 
+        [] (GLFWwindow* wnd, int count, const char* paths[]) {
+        if (count > 0) {
+            if(accept_player_list_path){
+                player_list_path= paths[0];
+                player_list_path+='\0';
+            }
+            if(accept_rank_list_path){
+                rank_list_path= paths[0];
+                rank_list_path+='\0';
+            }
+            if(accept_result_directory_path){
+                result_directory= paths[0];
+                result_directory= '\0';
+            }
+        }
+    });
     
     glfwSetWindowIcon(window, icons.size(), icons.data());
     
@@ -73,7 +100,7 @@ void mainGui(){
     bool show_another_window = false;
     ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
     
-    while (!glfwWindowShouldClose(window)){
+    while(!glfwWindowShouldClose(window)){
         glfwPollEvents();
         if (glfwGetWindowAttrib(window, GLFW_ICONIFIED) != 0){
             ImGui_ImplGlfw_Sleep(10);
@@ -104,35 +131,25 @@ void mainGui(){
     glfwDestroyWindow(window);
     glfwTerminate();
 }
-    
-    
-    
+
+
 void SmallGui::render(GLFWwindow* window){
-    static std::string player_list_path;
-    static std::string rank_list_path;
     static bool caught_nonexistingfile_error_playerlist=false;
     static bool caught_nonexistingfile_error_ranklist=false;
-    static bool accept_player_list_path;
-    accept_player_list_path=false;
-    static bool accept_rank_list_path;
-    accept_rank_list_path=false;
+    static bool caught_nonexistingfile_error_result_dir=false;
     static bool build_button_pressed;
-    build_button_pressed=false;
     static bool tournament_build_error=false;
+    static bool show_done_msg=false;
     static std::string tournament_build_error_msg="";
-    glfwSetDropCallback(window, 
-        [] (GLFWwindow* wnd, int count, const char* paths[]) {
-        if (count > 0) {
-            if(accept_player_list_path){
-                player_list_path = paths[0];
-                player_list_path+='\0';
-            }
-            if(accept_rank_list_path){
-                rank_list_path = paths[0];
-                rank_list_path+='\0';
-            }
-        }
-    });
+    static int n_players=0;
+    static int rotation_size=3;
+
+    build_button_pressed=false;
+    accept_player_list_path=false;
+    accept_rank_list_path=false;
+    accept_result_directory_path=false;
+    
+
     ImGuiIO& io = ImGui::GetIO();
     ImGui::SetNextWindowPos(ImVec2(0,0), ImGuiCond_Always);
     ImGui::SetNextWindowSize(io.DisplaySize, ImGuiCond_Always);
@@ -154,7 +171,47 @@ void SmallGui::render(GLFWwindow* window){
         accept_rank_list_path=true;
     }
     ImGui::NewLine();
+    std::string out_dir_txt="Output directory";
+    ImGui::InputText(out_dir_txt.c_str(), &result_directory);
+    float input_texts_width=ImGui::GetItemRectSize().x-ImGui::CalcTextSize((out_dir_txt+" ").c_str()).x;
+    if(ImGui::IsItemHovered()){
+        accept_rank_list_path=true;
+    }
+    ImGui::NewLine();
+    float num_input_size=ImGui::CalcTextSize("xxx ").x;
+    if(ImGui::BeginChild("##NumBox", 
+        ImVec2(input_texts_width, 0),
+        ImGuiChildFlags_AutoResizeY,
+        ImGuiWindowFlags_NoScrollWithMouse
+    )){
+        if(ImGui::BeginChild("##Box1",
+            ImVec2(input_texts_width/2, 0),
+            ImGuiChildFlags_AutoResizeY
+        )){
+            ImGui::Text("Players per team");
+            ImGui::NewLine();
+            ImGui::PushItemWidth(num_input_size);
+            ImGui::InputInt("##", &n_players, 0);
+            ImGui::PopItemWidth();
+        }
+        ImGui::EndChild();
+        ImGui::SameLine();
+        if(ImGui::BeginChild("##Box2",
+            ImVec2(input_texts_width/2, 0),
+            ImGuiChildFlags_AutoResizeY
+        )){
+            ImGui::Text("Algorithm pace");
+            ImGui::NewLine();
+            ImGui::PushItemWidth(num_input_size);
+            ImGui::InputInt("##", &rotation_size, 0);
+            ImGui::PopItemWidth();
+        }
+        ImGui::EndChild();
+    }
+    ImGui::NewLine();
+    ImGui::EndChild();
     if(ImGui::Button("Build this tournament!!")){
+        show_done_msg=false;
         if(!player_list_path.empty()){
             if(std::filesystem::exists(player_list_path)){
                 caught_nonexistingfile_error_playerlist=false;
@@ -169,6 +226,13 @@ void SmallGui::render(GLFWwindow* window){
                 caught_nonexistingfile_error_ranklist=true;
             }
         }
+        if(!result_directory.empty()){
+            if(std::filesystem::exists(result_directory)){
+                caught_nonexistingfile_error_result_dir=false;
+            }else{
+                caught_nonexistingfile_error_result_dir=true;
+            }
+        }
         build_button_pressed=true;
     }
     if(caught_nonexistingfile_error_playerlist){
@@ -180,26 +244,38 @@ void SmallGui::render(GLFWwindow* window){
         ImGui::NewLine();
         ImGui::Text("Rank list file does not exist");
     }
+
+    if(caught_nonexistingfile_error_result_dir){
+        ImGui::NewLine();
+        ImGui::Text("Directory specified to output the results does not exist");
+    }
     
     if( build_button_pressed
         && !caught_nonexistingfile_error_ranklist && !player_list_path.empty()
         && !caught_nonexistingfile_error_playerlist && !rank_list_path.empty()){
-        BuildTournamentResult build_res= buildTournamentFromCSV(player_list_path, rank_list_path);
+        BuildTournamentResult build_res= buildTournamentFromCSV(player_list_path, rank_list_path, n_players, rotation_size);
         if(build_res.error_code!=GOOD_TOURNAMENT_RESULT){
-            ImGui::NewLine();
             tournament_build_error_msg.clear();
             tournament_build_error_msg=
             ERROR_MESSAGE_MAP.at(build_res.error_code)
-            +"\nIf you can't find the cause, submit a ticket or an issue to the software mantainer.";
+            +"\nIf you can't find the cause of this issue, submit a ticket or an issue to the software mantainer.";
             tournament_build_error=true;
         }else{
             tournament_build_error=false;
             build_res.tournament_config;
-            build_res.tournament_config.genHTMLTable("D:\\VSCodeScripts\\D\\cpp_version\\assets\\res.html");
+            std::filesystem::path r_path(result_directory);
+            r_path.append(std::filesystem::path(player_list_path).stem().string()+".html");
+            build_res.tournament_config.genHTMLTable(r_path.string());
+            show_done_msg=true;
         }
     }
     if(tournament_build_error){
-        ImGui::Text("%s", tournament_build_error_msg.c_str());
+        ImGui::NewLine();
+        ImGui::TextWrapped("%s", tournament_build_error_msg.c_str());
+    }
+    if(show_done_msg){ //double check. No need
+        ImGui::NewLine();
+        ImGui::TextWrapped("Tournament built!!");
     }
     
     ImGui::End();
