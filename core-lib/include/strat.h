@@ -2,4 +2,4 @@
 #include "Config.h"
 
 
-void deduceAndApplyMoves(Config& config);
+void deduceAndApplyMoves(Config& config, std::size_t rotation_size);

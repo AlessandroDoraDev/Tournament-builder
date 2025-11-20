@@ -1,6 +1,6 @@
 #pragma once
 #include <utility>
+#include "absl/container/fixed_array.h"
 #include "MovePieceNRankPair.h"
 
-template<int rotation_size=2>
-using MoveArrT= std::array<MovePieceNRankPair, rotation_size>;
+using MoveArrT= absl::FixedArray<MovePieceNRankPair>;
