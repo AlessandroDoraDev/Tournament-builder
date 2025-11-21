@@ -1,5 +1,4 @@
 #include <string>
-#include <windows.h>
 #include "TournamentBuilderAPI.h"
 #include "matricesModule.h"
 #include "Config.h"

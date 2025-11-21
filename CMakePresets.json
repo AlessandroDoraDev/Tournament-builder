@@ -14,6 +14,32 @@
                 "CMAKE_C_COMPILER": "cl.exe",
                 "CMAKE_CXX_COMPILER": "cl.exe"
             }
+        },
+        {
+            "name": "Linux_ConfigPresetDebug",
+            "displayName": "Linux_ConfigPresetDebug",
+            "description": "Using GCC on Linux with Ninja",
+            "generator": "Ninja",
+            "binaryDir": "${sourceDir}/out/build/${presetName}",
+            "cacheVariables": {
+                "CMAKE_INSTALL_PREFIX": "${sourceDir}/out/install/${presetName}",
+                "CMAKE_C_COMPILER": "/usr/bin/gcc",
+                "CMAKE_CXX_COMPILER": "/usr/bin/g++",
+                "CMAKE_BUILD_TYPE": "Debug"
+            }
+        },
+        {
+            "name": "Linux_ConfigPresetRelease",
+            "displayName": "Linux_ConfigPresetRelease",
+            "description": "Using GCC on Linux with Ninja",
+            "generator": "Ninja",
+            "binaryDir": "${sourceDir}/out/build/${presetName}",
+            "cacheVariables": {
+                "CMAKE_INSTALL_PREFIX": "${sourceDir}/out/install/${presetName}",
+                "CMAKE_C_COMPILER": "/usr/bin/gcc",
+                "CMAKE_CXX_COMPILER": "/usr/bin/g++",
+                "CMAKE_BUILD_TYPE": "Release"
+            }
         }
     ],
     "buildPresets": [
@@ -27,6 +53,18 @@
             "name": "MSVC_ReleaseBuildPreset",
             "displayName": "MSVC_ReleaseBuildPreset",
             "configurePreset": "MSVC_ConfigPreset",
+            "configuration": "Release"
+        },
+        {
+            "name": "Linux_DebugBuildPreset",
+            "displayName": "Linux_DebugBuildPreset",
+            "configurePreset": "Linux_ConfigPresetDebug",
+            "configuration": "Debug"
+        },
+        {
+            "name": "Linux_ReleaseBuildPreset",
+            "displayName": "Linux_ReleaseBuildPreset",
+            "configurePreset": "Linux_ConfigPresetRelease",
             "configuration": "Release"
         }
     ]

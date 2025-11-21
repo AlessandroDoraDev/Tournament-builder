@@ -1,7 +1,8 @@
-cmake_minimum_required(VERSION 3.16)
+  cmake_minimum_required(VERSION 3.20)
 
 project(my_project LANGUAGES C CXX)
 
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_STANDARD 23)
 
 include(CTest)
@@ -9,15 +10,22 @@ enable_testing()
 
 add_subdirectory(libs/gtest)
 
+set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL " " FORCE)
+set(GLFW_BUILD_TESTS OFF CACHE BOOL " " FORCE)
+set(GLFW_BUILD_DOCS OFF CACHE BOOL " " FORCE)
+
+add_subdirectory(libs/GLFW)
+
 add_subdirectory(core-lib)
 add_subdirectory(libs/abseil-cpp)
 
 set(my_includes_dir src/include)
 set(my_impl_dir src/implementation)
 
-link_directories(
-  libs/GLFW/build/src/Debug
-)
+# link_directories(
+#   libs/GLFW/build/src/Debug
+#   out/build/Linux_ConfigPreset/libs/GLFW/src/
+# )
 
 
 add_library(imgui STATIC
@@ -93,7 +101,7 @@ ${test_dir})
 target_link_libraries(main 
 tournament-build-core-lib 
 imgui
-glfw3
+glfw
 stb
 absl::flat_hash_set 
 absl::hash absl::btree
@@ -108,7 +116,7 @@ add_custom_command(
 )
 
 target_link_libraries(imgui
-glfw3
+glfw
 )
 
 set(test_dir tests)
@@ -117,7 +125,21 @@ add_executable(test_target
     ${test_dir}/main_test.cpp
     ${test_dir}/utils.cpp
 )
-
+set_target_properties(main PROPERTIES
+  CXX_STANDARD 23
+  CXX_STANDARD_REQUIRED ON
+  CXX_EXTENSIONS OFF
+)
+set_target_properties(test_target PROPERTIES
+  CXX_STANDARD 23
+  CXX_STANDARD_REQUIRED ON
+  CXX_EXTENSIONS OFF
+)
+set_target_properties(tournament-build-core-lib PROPERTIES
+  CXX_STANDARD 23
+  CXX_STANDARD_REQUIRED ON
+  CXX_EXTENSIONS OFF
+)
 target_include_directories(test_target
     PRIVATE
     ${CMAKE_SOURCE_DIR}/libs/gtest/googletest/include
@@ -128,7 +150,7 @@ target_include_directories(test_target
 )
 
 link_directories(test_target
-    ../out/build/MSVC_ConfigPreset/core-lib/Release
+    ${CMAKE_CURRENT_BINARY_DIR}/core-lib/Release
 )
 
 target_link_libraries(test_target 
