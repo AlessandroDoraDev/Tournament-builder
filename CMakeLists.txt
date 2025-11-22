@@ -9,6 +9,7 @@ include(CTest)
 enable_testing()
 
 add_subdirectory(libs/gtest)
+add_subdirectory(libs/nativefiledialog-extended)
 
 set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL " " FORCE)
 set(GLFW_BUILD_TESTS OFF CACHE BOOL " " FORCE)
@@ -92,6 +93,8 @@ libs/imgui
 libs/imgui/backends
 libs/imgui/misc/cpp
 libs/GLFW/include
+libs/
+libs/nativefiledialog-extended/src/include
 libs/stb
 tests/
 ${test_dir})
@@ -103,9 +106,18 @@ tournament-build-core-lib
 imgui
 glfw
 stb
+nfd
 absl::flat_hash_set 
 absl::hash absl::btree
 absl::fixed_array)
+
+if(WIN32)
+target_link_libraries(main
+ole32
+uuid
+shell32
+)
+endif()
 
 add_custom_command(
   TARGET main

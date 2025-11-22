@@ -22,4 +22,4 @@ struct BuildTournamentResult{
     ErrorMessageCode error_code;
 };
 
-BuildTournamentResult buildTournamentFromCSV(std::string csv_path, std::string ranks_csv_path, std::size_t n_players, std::size_t rotation_size);
+BuildTournamentResult buildTournamentFromCSV(const std::string& players_csv_path, const std::string& ranks_csv_path, std::size_t n_players, std::size_t rotation_size);

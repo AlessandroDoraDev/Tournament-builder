@@ -12,6 +12,21 @@
 #include "TournamentBuilderAPI.h"
 #include <format>
 #include "globals.h"
+#include "nfd.h"
+#include <array>
+#include "osMacro.h"
+
+#ifdef OS_WINDOWS
+    #define GLFW_EXPOSE_NATIVE_WIN32
+#elif defined(OS_LINUX)
+    #define GLFW_EXPOSE_NATIVE_X11
+    //unsupported wayland (accordingly to NFDe's doc) until library update, but defining in case the lib gets updated. 
+    //The wayland support right now doesn't do anything anyway, accordingly to NFDe's documentation.
+    #define GLFW_EXPOSE_NATIVE_WAYLAND 
+#elif defined(OS_MACOS)
+    #define GLFW_EXPOSE_NATIVE_COCOA
+#endif
+#include <nfd_glfw3.h>
 
 
 bool accept_player_list_path;
@@ -32,10 +47,15 @@ void mainGui(){
     glfwSetErrorCallback(glfw_error_callback);
     if (!glfwInit())
         return;
-        const char* glsl_version = "#version 130";
-        glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-        glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
-        glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
+
+    if(NFD_Init()==NFD_ERROR){
+        return;
+    }
+
+    const char* glsl_version = "#version 130";
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
+    glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
     
     float main_scale = ImGui_ImplGlfw_GetContentScaleForMonitor(glfwGetPrimaryMonitor());
     
@@ -46,6 +66,11 @@ void mainGui(){
         nullptr, 
         nullptr
     );
+    glfwSetWindowSizeLimits(window, 
+        SmallGui::INPUT_WINDOW_WIDTH, SmallGui::INPUT_WINDOW_HEIGHT,
+        SmallGui::INPUT_WINDOW_WIDTH, SmallGui::INPUT_WINDOW_HEIGHT
+    );
+
     if (window == nullptr)
         return;
     std::vector<std::filesystem::path> icon_paths=SmallGui::listMatchingFiles(SmallGui::icons_path, SmallGui::icon_pattern);
@@ -129,6 +154,7 @@ void mainGui(){
     ImGui::DestroyContext();
     
     glfwDestroyWindow(window);
+    NFD_Quit();
     glfwTerminate();
 }
 
@@ -143,6 +169,7 @@ void SmallGui::render(GLFWwindow* window){
     static std::string tournament_build_error_msg="";
     static int n_players=0;
     static int rotation_size=3;
+    static const float BRWOSE_BUTTON_WIDTH=ImGui::CalcTextSize("Browse").x+ImGui::GetStyle().FramePadding.x*2;
 
     build_button_pressed=false;
     accept_player_list_path=false;
@@ -165,17 +192,32 @@ void SmallGui::render(GLFWwindow* window){
     if(ImGui::IsItemHovered()){
         accept_player_list_path=true;
     }
+    ImGui::SameLine();
+    ImGui::SetCursorPosX(ImGui::GetCursorPosX()+ImGui::GetContentRegionAvail().x-BRWOSE_BUTTON_WIDTH);
+    if(ImGui::Button("Browse##1")){
+        SmallGui::browseCSVInteraction(window, &player_list_path, result_directory);
+    }
     ImGui::NewLine();
     ImGui::InputText("Rank list path", &rank_list_path);
     if(ImGui::IsItemHovered()){
         accept_rank_list_path=true;
+    }
+    ImGui::SameLine();
+    ImGui::SetCursorPosX(ImGui::GetCursorPosX()+ImGui::GetContentRegionAvail().x-BRWOSE_BUTTON_WIDTH);
+    if(ImGui::Button("Browse##2")){
+        SmallGui::browseCSVInteraction(window, &rank_list_path, result_directory);
     }
     ImGui::NewLine();
     std::string out_dir_txt="Output directory";
     ImGui::InputText(out_dir_txt.c_str(), &result_directory);
     float input_texts_width=ImGui::GetItemRectSize().x-ImGui::CalcTextSize((out_dir_txt+" ").c_str()).x;
     if(ImGui::IsItemHovered()){
-        accept_rank_list_path=true;
+        accept_result_directory_path=true;
+    }
+    ImGui::SameLine();
+    ImGui::SetCursorPosX(ImGui::GetCursorPosX()+ImGui::GetContentRegionAvail().x-BRWOSE_BUTTON_WIDTH);
+    if(ImGui::Button("Browse##3")){
+        SmallGui::browseFolderInteraction(window, &result_directory, result_directory);
     }
     ImGui::NewLine();
     float num_input_size=ImGui::CalcTextSize("xxx ").x;
@@ -252,7 +294,8 @@ void SmallGui::render(GLFWwindow* window){
     
     if( build_button_pressed
         && !caught_nonexistingfile_error_ranklist && !player_list_path.empty()
-        && !caught_nonexistingfile_error_playerlist && !rank_list_path.empty()){
+        && !caught_nonexistingfile_error_playerlist && !rank_list_path.empty()
+        && !caught_nonexistingfile_error_result_dir && !result_directory.empty()){
         BuildTournamentResult build_res= buildTournamentFromCSV(player_list_path, rank_list_path, n_players, rotation_size);
         if(build_res.error_code!=GOOD_TOURNAMENT_RESULT){
             tournament_build_error_msg.clear();
@@ -303,4 +346,45 @@ SmallGui::listMatchingFiles(const std::filesystem::path& dir, const std::regex& 
     }
 
     return results;
+}
+
+
+bool SmallGui::browseCSVInteraction(GLFWwindow* window, std::string* dest, const std::string& defaultPath){
+    bool res=true;
+    
+    static const std::size_t BRWOSE_CSV_FILTER_COUNT= 1; 
+    nfdu8char_t* outPath;
+    std::array<nfdu8filteritem_t, BRWOSE_CSV_FILTER_COUNT> filters = {{ "CSV", "csv" }};
+    nfdopendialogu8args_t args= {0};
+    args.filterList= filters.data();
+    args.filterCount= BRWOSE_CSV_FILTER_COUNT;
+    args.defaultPath= defaultPath.data();
+    NFD_GetNativeWindowFromGLFWWindow(window, &args.parentWindow);
+    nfdresult_t result= NFD_OpenDialogU8_With(&outPath, &args);
+    if (result==NFD_OKAY){
+        dest->assign(outPath);
+        NFD_FreePathU8(outPath);
+    }else if(result!=NFD_CANCEL){
+        std::print("{}", NFD_GetError());
+        res=false;
+    }
+    return res;
+}
+
+
+bool SmallGui::browseFolderInteraction(GLFWwindow* window, std::string* dest, const std::string& defaultPath){
+    bool res=true; 
+    nfdu8char_t* outPath;
+    nfdpickfolderu8args_t args= {0};
+    args.defaultPath=defaultPath.data();
+    NFD_GetNativeWindowFromGLFWWindow(window, &args.parentWindow);
+    nfdresult_t result= NFD_PickFolderU8_With(&outPath, &args);
+    if (result==NFD_OKAY){
+        dest->assign(outPath);
+        NFD_FreePathU8(outPath);
+    }else if(result!=NFD_CANCEL){
+        std::print("{}", NFD_GetError());
+        res=false;
+    }
+    return res;
 }
