@@ -1,4 +1,4 @@
-  cmake_minimum_required(VERSION 3.20)
+cmake_minimum_required(VERSION 3.20)
 
 project(my_project LANGUAGES C CXX)
 
@@ -22,11 +22,6 @@ add_subdirectory(libs/abseil-cpp)
 
 set(my_includes_dir src/include)
 set(my_impl_dir src/implementation)
-
-# link_directories(
-#   libs/GLFW/build/src/Debug
-#   out/build/Linux_ConfigPreset/libs/GLFW/src/
-# )
 
 
 add_library(imgui STATIC
@@ -60,7 +55,6 @@ libs/stb
 add_executable(main WIN32
 ${my_impl_dir}/main_noiaFattaBene.cpp
 ${my_impl_dir}/TournamentBuilderGui.cpp
-${my_impl_dir}/TournamentBuilderAPI.cpp
 ${my_impl_dir}/WindowsDefs.cpp
 tests/utils.cpp)
 

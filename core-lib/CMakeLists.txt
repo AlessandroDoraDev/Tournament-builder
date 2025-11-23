@@ -16,7 +16,9 @@ ${my_impl_dir}/Config.cpp
 ${my_impl_dir}/TournamentConfig.cpp
 ${my_impl_dir}/TeamArray.cpp
 ${my_impl_dir}/strat.cpp
-${my_impl_dir}/to_strings.cpp)
+${my_impl_dir}/to_strings.cpp
+${my_impl_dir}/TournamentBuilderAPI.cpp
+)
 
 
 target_compile_definitions(tournament-build-core-lib 

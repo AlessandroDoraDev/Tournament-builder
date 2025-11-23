@@ -2,7 +2,6 @@
 #include "TournamentBuilderAPI.h"
 #include "matricesModule.h"
 #include "Config.h"
-#include "test_includes/utils.h"
 #include "strat.h"
 #include "TournamentConfig.h"
 #include <print>

@@ -38,7 +38,10 @@ RankCSVValidationToken isRankCSVValid(const CSVRows& rank_rows){
     for(const std::vector<std::string>& row: rank_rows){
         if(!(row.size()==1||row.size()==2)){
             return {false, first_line_size, n_rows};
-        } 
+        }
+        if(row.size()==2&&row[1].empty()){
+            return {false, first_line_size, n_rows};
+        }
         n_rows++;
     }
     return {true, first_line_size, n_rows};
