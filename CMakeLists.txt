@@ -1,9 +1,16 @@
 cmake_minimum_required(VERSION 3.20)
 
-project(my_project LANGUAGES C CXX)
+project(tournament-builder LANGUAGES C CXX OBJC OBJCXX)
 
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_STANDARD 23)
+
+set(CMAKE_OSX_DEPLOYMENT_TARGET "11.0" CACHE STRING "Minimum OS X deployment version")
+
+if(APPLE)
+set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -L/usr/local/opt/llvm/lib/c++ -L/usr/local/opt/llvm/lib/unwind -lunwind")
+set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -L/usr/local/opt/llvm/lib/c++ -L/usr/local/opt/llvm/lib/unwind -lunwind")
+endif()
 
 include(CTest)
 enable_testing()
@@ -62,6 +69,7 @@ if (MSVC)
   target_link_options(main PRIVATE "/SUBSYSTEM:WINDOWS" "/ENTRY:mainCRTStartup")
 endif()
 
+
 target_compile_definitions(main 
 PRIVATE 
 $<$<CONFIG:Debug>:MIO_DEBUG>
@@ -110,6 +118,16 @@ target_link_libraries(main
 ole32
 uuid
 shell32
+)
+endif()
+
+if(APPLE)
+find_library(APPKIT_LIBRARY AppKit)
+find_library(UTI_LIBRARY UniformTypeIdentifiers)
+
+target_link_libraries(main
+${APPKIT_LIBRARY}
+${UTI_LIBRARY}
 )
 endif()
 

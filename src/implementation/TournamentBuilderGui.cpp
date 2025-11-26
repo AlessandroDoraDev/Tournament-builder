@@ -52,10 +52,12 @@ void mainGui(){
         return;
     }
 
-    const char* glsl_version = "#version 130";
+    const char* glsl_version = "#version 150";
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 2);
     glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
+    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE); // Essential for macOS
     
     float main_scale = ImGui_ImplGlfw_GetContentScaleForMonitor(glfwGetPrimaryMonitor());
     
@@ -305,7 +307,6 @@ void SmallGui::render(GLFWwindow* window){
             tournament_build_error=true;
         }else{
             tournament_build_error=false;
-            build_res.tournament_config;
             std::filesystem::path r_path(result_directory);
             r_path.append(std::filesystem::path(player_list_path).stem().string()+".html");
             build_res.tournament_config.genHTMLTable(r_path.string());
