@@ -1,190 +1,81 @@
 cmake_minimum_required(VERSION 3.20)
 
-project(tournament-builder LANGUAGES C CXX OBJC OBJCXX)
+project(tournament-builder LANGUAGES C CXX)
 
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_STANDARD 23)
 
 set(CMAKE_OSX_DEPLOYMENT_TARGET "11.0" CACHE STRING "Minimum OS X deployment version")
 
-if(APPLE)
-set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -L/usr/local/opt/llvm/lib/c++ -L/usr/local/opt/llvm/lib/unwind -lunwind")
-set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -L/usr/local/opt/llvm/lib/c++ -L/usr/local/opt/llvm/lib/unwind -lunwind")
-endif()
+set(TB_TEST_DIR ${CMAKE_CURRENT_SOURCE_DIR}/tests)
+set(TB_LIBS_DIR ${CMAKE_CURRENT_SOURCE_DIR}/libs)
+set(TB_ASSETS_DIR ${CMAKE_CURRET_SOURCE_DIR}/assets)
 
-include(CTest)
-enable_testing()
-
-add_subdirectory(libs/gtest)
-add_subdirectory(libs/nativefiledialog-extended)
-
-set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL " " FORCE)
-set(GLFW_BUILD_TESTS OFF CACHE BOOL " " FORCE)
-set(GLFW_BUILD_DOCS OFF CACHE BOOL " " FORCE)
-
-add_subdirectory(libs/GLFW)
-
-add_subdirectory(core-lib)
-add_subdirectory(libs/abseil-cpp)
-
-set(my_includes_dir src/include)
-set(my_impl_dir src/implementation)
-
-
-add_library(imgui STATIC
-libs/imgui/imgui.cpp
-libs/imgui/imgui_demo.cpp
-libs/imgui/imgui_draw.cpp
-libs/imgui/imgui_tables.cpp
-libs/imgui/imgui_widgets.cpp
-libs/imgui/backends/imgui_impl_glfw.cpp
-libs/imgui/backends/imgui_impl_opengl3.cpp
-libs/imgui/misc/cpp/imgui_stdlib.cpp
+#include dirs vars
+set(TB_NFDE_INCLUDE_DIRS
+	${TB_LIBS_DIR}/nativefiledialog-extended/src/include
+)
+set(TB_GLFW_INCLUDE_DIRS 
+	${TB_LIBS_DIR}/libs/GLFW/include
+)
+set(TB_IMGUI_INCLUDE_DIRS
+	${TB_LIBS_DIR}/imgui
+	${TB_LIBS_DIR}/imgui/backends
+	${TB_LIBS_DIR}/imgui/misc/cpp
+)
+set(TB_STB_INCLUDE_DIRS
+	${TB_LIBS_DIR}/stb
+)
+set(TB_LIBS_INCLUDE_DIRS 
+	${TB_NFDE_INCLUDE_DIRS}
+	${TB_IMGUI_INCLUDE_DIRS}
+	${TB_GLFW_INCLUDE_DIRS}
+	${TB_STB_INCLUDE_DIRS}
+)
+set(TB_CORELIB_DIR
+	${CMAKE_CURRENT_SOURCE_DIR}/core-lib
+)
+set(TB_CORELIB_INCLUDE_DIRS
+	${TB_CORELIB_DIR}/include
+)
+set(TB_GTEST_INCLUDE_DIRS
+	${TB_LIBS_DIR}gtest/googletest/include
+	${TB_LIBS_DIR}/gtest/googlemock/include
+	${TB_CORELIB_INCLUDE_DIRS}
+	${CMAKE_CURRENT_SOURCE_DIR}/src/include
 )
 
-add_library(stb STATIC
-  libs/stb/stb_image.cpp
-)
-
-target_include_directories(imgui
-PRIVATE
-libs/imgui
-libs/imgui/backends
-libs/imgui/misc
-libs/GLFW/include
-)
-
-target_include_directories(stb
-PRIVATE
-libs/stb
-)
-
-add_executable(main WIN32
-${my_impl_dir}/main_noiaFattaBene.cpp
-${my_impl_dir}/TournamentBuilderGui.cpp
-${my_impl_dir}/WindowsDefs.cpp
-tests/utils.cpp)
-
-if (MSVC)
-  target_link_options(main PRIVATE "/SUBSYSTEM:WINDOWS" "/ENTRY:mainCRTStartup")
-endif()
+set(TB_CORELIB_TARGET_NAME tournament-build-core-lib)
+set(TB_MAIN_TARGET_NAME main)
+set(TB_IMGUI_TARGET_NAME imgui)
+set(TB_STB_TARGET_NAME stb)
+set(TB_TESTS_TARGET_NAME tb_tests)
 
 
-target_compile_definitions(main 
-PRIVATE 
-$<$<CONFIG:Debug>:MIO_DEBUG>
-$<$<CONFIG:Release>:MIO_RELEASE>
-#PROFILING_FLAG
-)
-
-if (MSVC)
-add_link_options(
-  $<$<CONFIG:Debug>:/INCREMENTAL> 
-  $<$<NOT:$<CONFIG:Debug>>:/INCREMENTAL:NO>
-)
-endif()
-
-set_target_properties(main PROPERTIES LINK_DEPENDS_NO_SHARED TRUE)
-
-target_include_directories(main 
-PRIVATE 
-${my_includes_dir}
-libs
-core-lib/include
-libs/imgui
-libs/imgui/backends
-libs/imgui/misc/cpp
-libs/GLFW/include
-libs/
-libs/nativefiledialog-extended/src/include
-libs/stb
-tests/
-${test_dir})
-
-
-
-target_link_libraries(main 
-tournament-build-core-lib 
-imgui
-glfw
-stb
-nfd
-absl::flat_hash_set 
-absl::hash absl::btree
-absl::fixed_array)
-
+#setting vars for platforms identification and compiler identification (in case they ever change and because it's easier to remember)
+set(TB_PLATFORM Undefined)
 if(WIN32)
-target_link_libraries(main
-ole32
-uuid
-shell32
-)
+	set(TB_PLATFORM WINDOWS)
+elseif(APPLE)
+	set(TB_PLATFORM MACOSX)
+elseif(UNIX AND NOT APPLE)
+	set(TB_PLATFORM LINUX)
 endif()
 
-if(APPLE)
-find_library(APPKIT_LIBRARY AppKit)
-find_library(UTI_LIBRARY UniformTypeIdentifiers)
-
-target_link_libraries(main
-${APPKIT_LIBRARY}
-${UTI_LIBRARY}
-)
+set(TB_CURRENT_COMPILER Undefined)
+if(MSVC)
+	set(TB_CURRENT_COMPILER COMPILER_MSVC)
 endif()
 
-add_custom_command(
-  TARGET main
-  POST_BUILD
-  COMMAND ${CMAKE_COMMAND} -E copy_directory
-    "${CMAKE_CURRENT_SOURCE_DIR}/icons"
-    "$<TARGET_FILE_DIR:main>/icons"
-)
 
-target_link_libraries(imgui
-glfw
-)
+if(${TB_PLATFORM} STREQUAL MACOSX)
+	set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -L/usr/local/opt/llvm/lib/c++ -L/usr/local/opt/llvm/lib/unwind -lunwind")
+	set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -L/usr/local/opt/llvm/lib/c++ -L/usr/local/opt/llvm/lib/unwind -lunwind")
+	enable_language(OBJC)
+	enable_language(OBJCXX)
+endif()
 
-set(test_dir tests)
-
-add_executable(test_target
-    ${test_dir}/main_test.cpp
-    ${test_dir}/utils.cpp
-)
-set_target_properties(main PROPERTIES
-  CXX_STANDARD 23
-  CXX_STANDARD_REQUIRED ON
-  CXX_EXTENSIONS OFF
-)
-set_target_properties(test_target PROPERTIES
-  CXX_STANDARD 23
-  CXX_STANDARD_REQUIRED ON
-  CXX_EXTENSIONS OFF
-)
-set_target_properties(tournament-build-core-lib PROPERTIES
-  CXX_STANDARD 23
-  CXX_STANDARD_REQUIRED ON
-  CXX_EXTENSIONS OFF
-)
-target_include_directories(test_target
-    PRIVATE
-    ${CMAKE_SOURCE_DIR}/libs/gtest/googletest/include
-    ${CMAKE_SOURCE_DIR}/libs/gtest/googlemock/include
-    ${CMAKE_SOURCE_DIR}/${my_includes_dir}
-    ${test_dir}
-    ${CMAKE_SOURCE_DIR}/core-lib/include
-)
-
-link_directories(test_target
-    ${CMAKE_CURRENT_BINARY_DIR}/core-lib/Release
-)
-
-target_link_libraries(test_target 
-    PRIVATE
-    GTest::gtest_main
-    absl::flat_hash_set 
-    absl::hash 
-    absl::btree
-    tournament-build-core-lib
-)
-
-include(GoogleTest)
-gtest_discover_tests(test_target)
+add_subdirectory(${TB_LIBS_DIR})
+add_subdirectory(${TB_CORELIB_DIR})
+add_subdirectory(src)
+add_subdirectory(${TB_TEST_DIR})

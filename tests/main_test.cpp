@@ -10,6 +10,7 @@
 #include <iostream>
 #include <print>
 #include "WindowsDefs.h"
+#include <filesystem>
 
 
 class CoreAlgorithmPerformance: public testing::TestWithParam<
@@ -21,7 +22,7 @@ class CoreAlgorithmPerformance: public testing::TestWithParam<
         std::size_t  //rotation_size
         >>{};
 
-const std::string base_dir="D:/VSCodeScripts/D/cpp_version/assets";
+const std::string base_dir=std::filesystem::current_path().string()+"/assets";
 const std::string dummy_csv_path=base_dir+"/CorrettoOlly.csv";
 const std::string dummy_rank_csv_path=base_dir+"/CorrettoOlly_rank.csv";
 
