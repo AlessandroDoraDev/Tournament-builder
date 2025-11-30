@@ -2,13 +2,21 @@ add_executable(${TB_MAIN_TARGET_NAME} WIN32
     implementation/main_noiaFattaBene.cpp
     implementation/TournamentBuilderGui.cpp
     implementation/WindowsDefs.cpp
+    implementation/appImgDefs.cpp
 )
 
 
 target_compile_definitions(${TB_MAIN_TARGET_NAME} PRIVATE 
-    $<$<CONFIG:Debug>:MIO_DEBUG>
-    $<$<CONFIG:Release>:MIO_RELEASE>
+    $<$<CONFIG:Debug>:DEBUG>
+    $<$<CONFIG:Release>:NDEBUG>
 )
+if(DEFINED TB_APPIMAGE_BUILD)
+message(STATUS "Allowing paths relative to $APPDIR")
+target_compile_definitions(${TB_MAIN_TARGET_NAME} PRIVATE 
+    APPIMAGE_BUILD
+)	
+endif()
+
 
 set_target_properties(${TB_MAIN_TARGET_NAME} PROPERTIES LINK_DEPENDS_NO_SHARED TRUE)
 
@@ -56,9 +64,9 @@ endif()
 
 
 add_custom_command(
-  TARGET ${TB_MAIN_TARGET_NAME}
-  POST_BUILD
-  COMMAND ${CMAKE_COMMAND} -E copy_directory
-    "${CMAKE_SOURCE_DIR}/icons"
-    "$<TARGET_FILE_DIR:${TB_MAIN_TARGET_NAME}>/icons"
+    TARGET ${TB_MAIN_TARGET_NAME}
+    POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+        "${CMAKE_SOURCE_DIR}/icons"
+        "$<TARGET_FILE_DIR:${TB_MAIN_TARGET_NAME}>/icons"
 )

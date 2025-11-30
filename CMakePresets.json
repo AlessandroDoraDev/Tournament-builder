@@ -42,6 +42,20 @@
             }
         },
         {
+            "name": "Linux_ConfigPresetReleaseAppImage",
+            "displayName": "Linux_ConfigPresetReleaseAppImage",
+            "description": "Using GCC on Linux with Ninja in Release mode",
+            "generator": "Ninja",
+            "binaryDir": "${sourceDir}/out/build/${presetName}",
+            "cacheVariables": {
+                "CMAKE_INSTALL_PREFIX": "${sourceDir}/out/install/${presetName}",
+                "CMAKE_C_COMPILER": "gcc",
+                "CMAKE_CXX_COMPILER": "g++",
+                "CMAKE_BUILD_TYPE": "Release",
+                "TB_APPIMAGE_BUILD": "ON"
+            }
+        },
+        {
             "name": "MacOS_ConfigPresetDebug",
             "displayName": "MacOS_ConfigPresetDebug",
             "description": "MacOS using Clang with Unix makefiles in Debug mode",
@@ -93,6 +107,12 @@
             "name": "Linux_ReleaseBuildPreset",
             "displayName": "Linux_ReleaseBuildPreset",
             "configurePreset": "Linux_ConfigPresetRelease",
+            "configuration": "Release"
+        },
+        {
+            "name": "Linux_ReleaseBuildPresetAppImage",
+            "displayName": "Linux_ReleaseBuildPresetAppImage",
+            "configurePreset": "Linux_ConfigPresetReleaseAppImage",
             "configuration": "Release"
         },
         {

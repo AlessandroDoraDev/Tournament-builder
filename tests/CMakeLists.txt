@@ -16,11 +16,11 @@ target_link_libraries(${TB_TESTS_TARGET_NAME} PRIVATE
 )
 
 add_custom_command(
-  TARGET ${TB_TESTS_TARGET_NAME}
-  POST_BUILD
-  COMMAND ${CMAKE_COMMAND} -E copy_directory
-    "${CMAKE_SOURCE_DIR}/assets"
-    "$<TARGET_FILE_DIR:${TB_TESTS_TARGET_NAME}>/assets"
+    TARGET ${TB_TESTS_TARGET_NAME}
+    POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+        "${CMAKE_SOURCE_DIR}/assets"
+        "$<TARGET_FILE_DIR:${TB_TESTS_TARGET_NAME}>/assets"
 )
 
 include(GoogleTest)

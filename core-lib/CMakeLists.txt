@@ -33,5 +33,6 @@ target_include_directories(${TB_CORELIB_TARGET_NAME} PRIVATE
 # Declare dependency on the absl::strings library
 target_link_libraries(${TB_CORELIB_TARGET_NAME} PRIVATE 
 	absl::flat_hash_set
-	absl::hash absl::btree
+	absl::hash
+	absl::btree
 )

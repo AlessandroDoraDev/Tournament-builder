@@ -37,12 +37,12 @@ static std::string rank_list_path;
 static std::string result_directory=std::filesystem::current_path().string();
 
 
-static void glfw_error_callback(int error, const char* description)
-{
+static void glfw_error_callback(int error, const char* description){
     fprintf(stderr, "GLFW Error %d: %s\n", error, description);
 }
 
-// Main code
+std::filesystem::path SmallGui::iconsPath(){return APPDIR/"../share/icons/hicolor/";}
+
 void mainGui(){
     glfwSetErrorCallback(glfw_error_callback);
     if (!glfwInit())
@@ -58,6 +58,9 @@ void mainGui(){
     glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE); // Essential for macOS
+    glfwWindowHintString(GLFW_WAYLAND_APP_ID, "tournament-builder");
+    glfwWindowHintString(GLFW_X11_CLASS_NAME, "tournament-builder");
+    glfwWindowHintString(GLFW_X11_INSTANCE_NAME, "tournament-builder-instance");
     
     float main_scale = ImGui_ImplGlfw_GetContentScaleForMonitor(glfwGetPrimaryMonitor());
     
@@ -75,13 +78,21 @@ void mainGui(){
 
     if (window == nullptr)
         return;
-    std::vector<std::filesystem::path> icon_paths=SmallGui::listMatchingFiles(SmallGui::icons_path, SmallGui::icon_pattern);
+    
+    std::vector<std::filesystem::path> icon_paths=SmallGui::listMatchingFiles(SmallGui::iconsPath(), SmallGui::icon_pattern);
     std::vector<GLFWimage> icons;
-    icons.reserve(5);
+    icons.reserve(icon_paths.size());
+    if(icon_paths.size()==0){
+        std::println("Didn't find app's icons");
+    }
     for(std::filesystem::path& path: icon_paths){
         int width, height, desired_channels;
         unsigned char* pixels= stbi_load(path.string().c_str(), &width, &height, &desired_channels, 4);
-        icons.emplace_back(width, height, pixels);
+        if(pixels){
+            icons.emplace_back(width, height, pixels);
+        }else{
+            std::println("Problem loading icon: {}, {}", path.string(), stbi_failure_reason());
+        }
     }
     
     glfwMakeContextCurrent(window);
@@ -107,11 +118,16 @@ void mainGui(){
     
     glfwSetWindowIcon(window, icons.size(), icons.data());
     
+    for(GLFWimage& icon: icons){
+        stbi_image_free(icon.pixels);
+    }
+
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
     ImGuiIO& io = ImGui::GetIO(); (void)io;
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;
+    io.IniFilename= nullptr;
     
     ImGui::StyleColorsDark();
     
@@ -337,6 +353,16 @@ SmallGui::listMatchingFiles(const std::filesystem::path& dir, const std::regex& 
     if (!std::filesystem::exists(dir) || !std::filesystem::is_directory(dir))
         return results;
 
+#if defined(OS_LINUX) && defined(APPIMAGE_BUILD)
+    for(auto const& entry : std::filesystem::directory_iterator(dir)){
+        if (entry.is_regular_file())
+            continue;
+        const auto dirname= entry.path().filename().string();
+        if(std::regex_match(dirname, SmallGui::ICONS_FOLDER_PATTERN)){
+            results.push_back(entry.path()/"apps/icon.png");
+        }
+    }
+#else
     for (auto const& entry : std::filesystem::directory_iterator(dir)){
         if (!entry.is_regular_file())
             continue;
@@ -345,6 +371,7 @@ SmallGui::listMatchingFiles(const std::filesystem::path& dir, const std::regex& 
             results.push_back(entry.path());
         }
     }
+#endif
 
     return results;
 }

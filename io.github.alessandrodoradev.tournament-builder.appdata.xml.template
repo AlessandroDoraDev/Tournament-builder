@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+	<id>{}</id>
+	<metadata_license>FSFAP</metadata_license>
+	<project_license>MIT</project_license>
+	<name>Tournament builder</name>
+	<summary>Create your tournament with balanced teams</summary>
+	<description>
+		<p>Tournament builder is a simple desktop application that produces a set of teams, given a list of people (with their associated skill level) and a list of all the possible skill levels allowed.
+
+It was originally made in the context of tournament organization, but its algorithm can be applied in any similar situation that requires to group a set number of weighted resources evenly.
+</p>
+	</description>
+	<launchable type="desktop-id">{}.desktop</launchable>
+	<url type="homepage">https://github.com/AlessandroDoraDev</url>
+	<screenshots>
+		<screenshot type="default">
+    		<caption>A view of Tournament Builder’s main window</caption>
+			<image>https://i.imgur.com/Uz0zI72.png</image>
+		</screenshot>
+	</screenshots>
+	<provides>
+		<id>{}.desktop</id>
+	</provides>
+	<developer id="io.github.alessandrodoradev">
+		<name>Tournament-builder</name>
+		<url type="homepage">https://github.com/AlessandroDoraDev</url>
+	</developer>
+	<content_rating type="oars-1.0"/>
+	<releases>
+		<release version="{}" date="{}" type="stable">
+			<description>
+				<p>Version {} of Tournament Builder — core features implemented.</p>
+			</description>
+		</release>
+	</releases>
+</component>
