@@ -1,9 +1,7 @@
 #include <string>
-#include <windows.h>
 #include "TournamentBuilderAPI.h"
 #include "matricesModule.h"
 #include "Config.h"
-#include "test_includes/utils.h"
 #include "strat.h"
 #include "TournamentConfig.h"
 #include <print>
@@ -19,7 +17,7 @@ std::map<ErrorMessageCode, std::string> ERROR_MESSAGE_MAP={
     {FOUND_PLAYERS_NOT_FITTING_TEAMS_SIZE, "Player list doesn't fit the teams' sizes..."}
 };
 
-BuildTournamentResult buildTournamentFromCSV(std::string players_csv_path, std::string ranks_csv_path, std::size_t n_players, std::size_t rotation_size) {
+BuildTournamentResult buildTournamentFromCSV(const std::string& players_csv_path, const std::string& ranks_csv_path, std::size_t n_players, std::size_t rotation_size) {
     
 
     CSVRows rows = readCSV(players_csv_path);

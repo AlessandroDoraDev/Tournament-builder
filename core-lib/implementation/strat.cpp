@@ -39,7 +39,7 @@ using IndexesArray= absl::FixedArray<std::size_t>;
 using RIndexesArray= absl::FixedArray<std::size_t>;
 using SymbolsArray= absl::FixedArray<char>;
 using RankMoveSumArray= absl::FixedArray<int>;
-#ifdef MIO_DEBUG
+#ifdef DEBUG
     using TripletPtrSet= std::unordered_set<Triplet*, TripletPtrHash, TripletPtrEq>;
     using TripletSet= std::unordered_set<Triplet, TripletHash, TripletEq>;
     using RankMoveSumMap= std::unordered_map<std::size_t, int>;

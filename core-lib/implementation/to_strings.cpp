@@ -2,6 +2,7 @@
 #include <format>
 #include <iomanip>
 #include <sstream>
+#include <cmath>
 #include "globals.h"
 
 std::string to_string(const Rank& rank){

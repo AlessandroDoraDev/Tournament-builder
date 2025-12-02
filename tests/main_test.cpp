@@ -1,6 +1,5 @@
 #include <gtest/gtest.h>
 #include <string>
-#include <windows.h>
 #include "TournamentBuilderAPI.h"
 #include "matricesModule.h"
 #include "Config.h"
@@ -10,7 +9,8 @@
 #include <chrono>
 #include <iostream>
 #include <print>
-
+#include "WindowsDefs.h"
+#include <filesystem>
 
 
 class CoreAlgorithmPerformance: public testing::TestWithParam<
@@ -22,7 +22,7 @@ class CoreAlgorithmPerformance: public testing::TestWithParam<
         std::size_t  //rotation_size
         >>{};
 
-const std::string base_dir="D:/VSCodeScripts/D/cpp_version/assets";
+const std::string base_dir=std::filesystem::current_path().string()+"/assets";
 const std::string dummy_csv_path=base_dir+"/CorrettoOlly.csv";
 const std::string dummy_rank_csv_path=base_dir+"/CorrettoOlly_rank.csv";
 
@@ -31,7 +31,7 @@ TEST_P(CoreAlgorithmPerformance, PerfTest){
     std::string ranks_csv_path= std::get<1>(GetParam());
     std::size_t n_players=std::get<3>(GetParam());
     std::size_t rotation_size=std::get<4>(GetParam());
-    SetConsoleOutputCP(CP_UTF8); //changing windows console decoding to utf8
+    setupConsoleEncoding(); //changing windows console decoding to utf8
     std::println("Testing file \"{}\"", csv_path);
     CSVRows rows = readCSV(csv_path);
     ASSERT_NE(rows.size(), 0)
@@ -88,7 +88,7 @@ TEST_P(CoreAlgorithmDummy, DummyTest){
     std::string ranks_csv_path= std::get<1>(GetParam());
     std::size_t n_players=std::get<2>(GetParam());
     std::size_t rotation_size=std::get<3>(GetParam());
-    SetConsoleOutputCP(CP_UTF8); //changing windows console decoding to utf8
+    setupConsoleEncoding(); //changing windows console decoding to utf8
     std::println("Testing file \"{}\"", csv_path);
     CSVRows rows = readCSV(csv_path);
     ASSERT_NE(rows.size(), 0)

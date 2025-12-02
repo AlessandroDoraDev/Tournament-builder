@@ -14,6 +14,74 @@
                 "CMAKE_C_COMPILER": "cl.exe",
                 "CMAKE_CXX_COMPILER": "cl.exe"
             }
+        },
+        {
+            "name": "Linux_ConfigPresetDebug",
+            "displayName": "Linux_ConfigPresetDebug",
+            "description": "Using GCC on Linux with Ninja in Debug mode",
+            "generator": "Ninja",
+            "binaryDir": "${sourceDir}/out/build/${presetName}",
+            "cacheVariables": {
+                "CMAKE_INSTALL_PREFIX": "${sourceDir}/out/install/${presetName}",
+                "CMAKE_C_COMPILER": "/usr/bin/gcc",
+                "CMAKE_CXX_COMPILER": "/usr/bin/g++",
+                "CMAKE_BUILD_TYPE": "Debug"
+            }
+        },
+        {
+            "name": "Linux_ConfigPresetRelease",
+            "displayName": "Linux_ConfigPresetRelease",
+            "description": "Using GCC on Linux with Ninja in Release mode",
+            "generator": "Ninja",
+            "binaryDir": "${sourceDir}/out/build/${presetName}",
+            "cacheVariables": {
+                "CMAKE_INSTALL_PREFIX": "${sourceDir}/out/install/${presetName}",
+                "CMAKE_C_COMPILER": "gcc",
+                "CMAKE_CXX_COMPILER": "g++",
+                "CMAKE_BUILD_TYPE": "Release"
+            }
+        },
+        {
+            "name": "Linux_ConfigPresetReleaseAppImage",
+            "displayName": "Linux_ConfigPresetReleaseAppImage",
+            "description": "Using GCC on Linux with Ninja in Release mode",
+            "generator": "Ninja",
+            "binaryDir": "${sourceDir}/out/build/${presetName}",
+            "cacheVariables": {
+                "CMAKE_INSTALL_PREFIX": "${sourceDir}/out/install/${presetName}",
+                "CMAKE_C_COMPILER": "gcc",
+                "CMAKE_CXX_COMPILER": "g++",
+                "CMAKE_BUILD_TYPE": "Release",
+                "TB_APPIMAGE_BUILD": "ON"
+            }
+        },
+        {
+            "name": "MacOS_ConfigPresetDebug",
+            "displayName": "MacOS_ConfigPresetDebug",
+            "description": "MacOS using Clang with Unix makefiles in Debug mode",
+            "generator": "Ninja",
+            "binaryDir": "${sourceDir}/out/build/${presetName}",
+            "cacheVariables": {
+                "CMAKE_INSTALL_PREFIX": "${sourceDir}/out/install/${presetName}",
+                "CMAKE_C_COMPILER": "/usr/local/opt/llvm/bin/clang",
+                "CMAKE_CXX_COMPILER": "/usr/local/opt/llvm/bin/clang++",
+                "CMAKE_SYSROOT": "/Library/Developer/CommandLineTools/SDKs/MacOSX11.3.sdk",
+                "CMAKE_BUILD_TYPE": "Debug"
+            }
+        },
+        {
+            "name": "MacOS_ConfigPresetRelease",
+            "displayName": "MacOS_ConfigPresetRelease",
+            "description": "MacOS using Clang with Unix makefiles in Release mode",
+            "generator": "Ninja",
+            "binaryDir": "${sourceDir}/out/build/${presetName}",
+            "cacheVariables": {
+                "CMAKE_INSTALL_PREFIX": "${sourceDir}/out/install/${presetName}",
+                "CMAKE_C_COMPILER": "/usr/local/opt/llvm/bin/clang",
+                "CMAKE_CXX_COMPILER": "/usr/local/opt/llvm/bin/clang++",
+                "CMAKE_SYSROOT": "/Library/Developer/CommandLineTools/SDKs/MacOSX11.3.sdk",
+                "CMAKE_BUILD_TYPE": "Release"
+            }
         }
     ],
     "buildPresets": [
@@ -27,6 +95,36 @@
             "name": "MSVC_ReleaseBuildPreset",
             "displayName": "MSVC_ReleaseBuildPreset",
             "configurePreset": "MSVC_ConfigPreset",
+            "configuration": "Release"
+        },
+        {
+            "name": "Linux_DebugBuildPreset",
+            "displayName": "Linux_DebugBuildPreset",
+            "configurePreset": "Linux_ConfigPresetDebug",
+            "configuration": "Debug"
+        },
+        {
+            "name": "Linux_ReleaseBuildPreset",
+            "displayName": "Linux_ReleaseBuildPreset",
+            "configurePreset": "Linux_ConfigPresetRelease",
+            "configuration": "Release"
+        },
+        {
+            "name": "Linux_ReleaseBuildPresetAppImage",
+            "displayName": "Linux_ReleaseBuildPresetAppImage",
+            "configurePreset": "Linux_ConfigPresetReleaseAppImage",
+            "configuration": "Release"
+        },
+        {
+            "name": "MacOS_DebugBuildPreset",
+            "displayName": "MacOS_DebugBuildPreset",
+            "configurePreset": "MacOS_ConfigPresetDebug",
+            "configuration": "Debug"
+        },
+        {
+            "name": "MacOS_ReleaseBuildPreset",
+            "displayName": "MacOS_ReleaseBuildPreset",
+            "configurePreset": "MacOS_ConfigPresetRelease",
             "configuration": "Release"
         }
     ]

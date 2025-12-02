@@ -1,144 +1,158 @@
-cmake_minimum_required(VERSION 3.16)
+cmake_minimum_required(VERSION 3.20)
 
-project(my_project LANGUAGES C CXX)
+set(TB_PROJECT_NAME tournament-builder)
+project(${TB_PROJECT_NAME} LANGUAGES C CXX)
 
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_STANDARD 23)
+set(TB_MAIN_VERSION 1)
+set(TB_RELEASE_VERSION 0)
+set(TB_PATCH_VERSION 0)
+set(TB_VERSION ${TB_MAIN_VERSION}.${TB_RELEASE_VERSION}.${TB_PATCH_VERSION})
 
-include(CTest)
-enable_testing()
+set(CMAKE_OSX_DEPLOYMENT_TARGET "11.0" CACHE STRING "Minimum OS X deployment version")
 
-add_subdirectory(libs/gtest)
+set(TB_OFFICIAL_NAME "${TB_PROJECT_NAME}-${TB_VERSION}")
+set(TB_TEST_DIR ${CMAKE_CURRENT_SOURCE_DIR}/tests)
+set(TB_LIBS_DIR ${CMAKE_CURRENT_SOURCE_DIR}/libs)
+set(TB_ASSETS_DIR ${CMAKE_CURRENT_SOURCE_DIR}/assets)
 
-add_subdirectory(core-lib)
-add_subdirectory(libs/abseil-cpp)
-
-set(my_includes_dir src/include)
-set(my_impl_dir src/implementation)
-
-link_directories(
-  libs/GLFW/build/src/Debug
+#include dirs vars
+set(TB_NFDE_INCLUDE_DIRS
+	${TB_LIBS_DIR}/nativefiledialog-extended/src/include
+)
+set(TB_GLFW_INCLUDE_DIRS 
+	${TB_LIBS_DIR}/libs/GLFW/include
+)
+set(TB_IMGUI_INCLUDE_DIRS
+	${TB_LIBS_DIR}/imgui
+	${TB_LIBS_DIR}/imgui/backends
+	${TB_LIBS_DIR}/imgui/misc/cpp
+)
+set(TB_STB_INCLUDE_DIRS
+	${TB_LIBS_DIR}/stb
+)
+set(TB_LIBS_INCLUDE_DIRS 
+	${TB_NFDE_INCLUDE_DIRS}
+	${TB_IMGUI_INCLUDE_DIRS}
+	${TB_GLFW_INCLUDE_DIRS}
+	${TB_STB_INCLUDE_DIRS}
+)
+set(TB_CORELIB_DIR
+	${CMAKE_CURRENT_SOURCE_DIR}/core-lib
+)
+set(TB_CORELIB_INCLUDE_DIRS
+	${TB_CORELIB_DIR}/include
+)
+set(TB_GTEST_INCLUDE_DIRS
+	${TB_LIBS_DIR}gtest/googletest/include
+	${TB_LIBS_DIR}/gtest/googlemock/include
+	${TB_CORELIB_INCLUDE_DIRS}
+	${CMAKE_CURRENT_SOURCE_DIR}/src/include
 )
 
+set(TB_CORELIB_TARGET_NAME tournament-build-core-lib)
+set(TB_MAIN_TARGET_NAME ${PROJECT_NAME})
+set(TB_IMGUI_TARGET_NAME imgui)
+set(TB_STB_TARGET_NAME stb)
+set(TB_TESTS_TARGET_NAME tb_tests)
 
-add_library(imgui STATIC
-libs/imgui/imgui.cpp
-libs/imgui/imgui_demo.cpp
-libs/imgui/imgui_draw.cpp
-libs/imgui/imgui_tables.cpp
-libs/imgui/imgui_widgets.cpp
-libs/imgui/backends/imgui_impl_glfw.cpp
-libs/imgui/backends/imgui_impl_opengl3.cpp
-libs/imgui/misc/cpp/imgui_stdlib.cpp
-)
 
-add_library(stb STATIC
-  libs/stb/stb_image.cpp
-)
-
-target_include_directories(imgui
-PRIVATE
-libs/imgui
-libs/imgui/backends
-libs/imgui/misc
-libs/GLFW/include
-)
-
-target_include_directories(stb
-PRIVATE
-libs/stb
-)
-
-add_executable(main WIN32
-${my_impl_dir}/main_noiaFattaBene.cpp
-${my_impl_dir}/TournamentBuilderGui.cpp
-${my_impl_dir}/TournamentBuilderAPI.cpp
-${my_impl_dir}/WindowsDefs.cpp
-tests/utils.cpp)
-
-if (MSVC)
-  target_link_options(main PRIVATE "/SUBSYSTEM:WINDOWS" "/ENTRY:mainCRTStartup")
+#setting vars for platforms identification and compiler identification (in case they ever change and because it's easier to remember)
+set(TB_PLATFORM Undefined)
+if(WIN32)
+	set(TB_PLATFORM WINDOWS)
+elseif(APPLE)
+	set(TB_PLATFORM MACOSX)
+elseif(UNIX AND NOT APPLE)
+	set(TB_PLATFORM LINUX)
 endif()
 
-target_compile_definitions(main 
-PRIVATE 
-$<$<CONFIG:Debug>:MIO_DEBUG>
-$<$<CONFIG:Release>:MIO_RELEASE>
-#PROFILING_FLAG
-)
-
-if (MSVC)
-add_link_options(
-  $<$<CONFIG:Debug>:/INCREMENTAL> 
-  $<$<NOT:$<CONFIG:Debug>>:/INCREMENTAL:NO>
-)
+set(TB_CURRENT_COMPILER Undefined)
+if(MSVC)
+	set(TB_CURRENT_COMPILER COMPILER_MSVC)
 endif()
 
-set_target_properties(main PROPERTIES LINK_DEPENDS_NO_SHARED TRUE)
 
-target_include_directories(main 
-PRIVATE 
-${my_includes_dir}
-libs
-core-lib/include
-libs/imgui
-libs/imgui/backends
-libs/imgui/misc/cpp
-libs/GLFW/include
-libs/stb
-tests/
-${test_dir})
+if(${TB_PLATFORM} STREQUAL MACOSX)
+	set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -L/usr/local/opt/llvm/lib/c++ -L/usr/local/opt/llvm/lib/unwind -lunwind")
+	set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -L/usr/local/opt/llvm/lib/c++ -L/usr/local/opt/llvm/lib/unwind -lunwind")
+	enable_language(OBJC)
+	enable_language(OBJCXX)
+endif()
+
+add_subdirectory(${TB_LIBS_DIR})
+add_subdirectory(${TB_CORELIB_DIR})
+add_subdirectory(src)
+add_subdirectory(${TB_TEST_DIR})
 
 
+##################################################################################################
+##################################################################################################
+##################################################################################################
+##################################################################################################
 
-target_link_libraries(main 
-tournament-build-core-lib 
-imgui
-glfw3
-stb
-absl::flat_hash_set 
-absl::hash absl::btree
-absl::fixed_array)
 
-add_custom_command(
-  TARGET main
-  POST_BUILD
-  COMMAND ${CMAKE_COMMAND} -E copy_directory
-    "${CMAKE_CURRENT_SOURCE_DIR}/icons"
-    "$<TARGET_FILE_DIR:main>/icons"
-)
+set(TB_ICON_SIZES 16x16 32x32 48x48 64x64 128x128 256x256)
 
-target_link_libraries(imgui
-glfw3
-)
+file(GLOB TB_ICON_DIR_RAW_FILES icons/*)
+set(TB_ICON_FILE_NAMES "")
+set(TB_ICON_SIZES "")
+foreach(P ${TB_ICON_DIR_RAW_FILES})
+	get_filename_component(FNAME ${P} NAME)
+	list(APPEND TB_ICON_FILE_NAMES "${FNAME}")
+endforeach()
+list(FILTER TB_ICON_FILE_NAMES INCLUDE REGEX [[icon([0-9]+)x([0-9]+)\.png]])
 
-set(test_dir tests)
+foreach(TB_FILE_NAME ${TB_ICON_FILE_NAMES})
+	string(REGEX MATCH [[([0-9]+)x([0-9]+)]] TB_SIZE_MATCH "${TB_FILE_NAME}")
+	list(APPEND TB_ICON_SIZES "${TB_SIZE_MATCH}")
+endforeach()
 
-add_executable(test_target
-    ${test_dir}/main_test.cpp
-    ${test_dir}/utils.cpp
-)
 
-target_include_directories(test_target
-    PRIVATE
-    ${CMAKE_SOURCE_DIR}/libs/gtest/googletest/include
-    ${CMAKE_SOURCE_DIR}/libs/gtest/googlemock/include
-    ${CMAKE_SOURCE_DIR}/${my_includes_dir}
-    ${test_dir}
-    ${CMAKE_SOURCE_DIR}/core-lib/include
-)
+if(NOT ${CMAKE_BUILD_TYPE} STREQUAL Release)
+	install(CODE [[
+		message(STATUS "Installation is setup to only work in Release mode. Be sure to set it.")
+	]])
+endif()
+if(${TB_PLATFORM} STREQUAL LINUX) 
+if(${CMAKE_BUILD_TYPE} STREQUAL Release)
+	set(TB_APPIMAGE_DIR "${CMAKE_INSTALL_PREFIX}/${TB_OFFICIAL_NAME}.AppDir")
 
-link_directories(test_target
-    ../out/build/MSVC_ConfigPreset/core-lib/Release
-)
+	install(CODE "
+		set(TB_APPIMAGE_DIR \"${TB_APPIMAGE_DIR}\")\n
+		set(TB_MAIN_TARGET_NAME \"${TB_MAIN_TARGET_NAME}\")\n
+		set(TB_OFFICIAL_NAME \"${TB_OFFICIAL_NAME}\")\n
+		set(TB_PROJECT_NAME \"${TB_PROJECT_NAME}\")\n
+		set(TB_INSTALL_PREFIX \"${CMAKE_INSTALL_PREFIX}\")\n
+		set(TB_MAIN_DIR \"${CMAKE_CURRENT_SOURCE_DIR}\")\n
+		set(TB_VERSION \"${TB_VERSION}\")		
+	")
 
-target_link_libraries(test_target 
-    PRIVATE
-    GTest::gtest_main
-    absl::flat_hash_set 
-    absl::hash 
-    absl::btree
-    tournament-build-core-lib
-)
-
-include(GoogleTest)
-gtest_discover_tests(test_target)
+	install(TARGETS ${TB_MAIN_TARGET_NAME}
+		RUNTIME DESTINATION ${TB_APPIMAGE_DIR}/usr/bin/
+		CONFIGURATIONS Release
+	)
+	install(CODE [[
+		message(STATUS "Removing absolute paths from executable ${TB_APPIMAGE_DIR}/usr/bin/${TB_MAIN_TARGET_NAME}...")
+		execute_process(
+			COMMAND sed -i -e "s#/usr#././#g" "${TB_APPIMAGE_DIR}/usr/bin/${TB_MAIN_TARGET_NAME}"
+		)
+	]])
+	foreach(SIZE ${TB_ICON_SIZES})
+		install(FILES "icons/icon${SIZE}.png"
+			DESTINATION "${TB_APPIMAGE_DIR}/usr/share/icons/hicolor/${SIZE}/apps/"
+			RENAME icon.png
+		)
+	endforeach()
+	install(FILES README.md LICENSE
+		DESTINATION "${TB_APPIMAGE_DIR}/"
+	)
+	install(CODE [[
+		message(STATUS "executing python3 \"${TB_MAIN_DIR}/LinuxPackagingScript.py\" \"${TB_OFFICIAL_NAME}\" \"${TB_PROJECT_NAME}\" \"${TB_MAIN_TARGET_NAME}\" \"${TB_APPIMAGE_DIR}\" \"${TB_INSTALL_PREFIX}\" \"${TB_VERSION}\"")
+		execute_process(
+			COMMAND python3 "${TB_MAIN_DIR}/LinuxPackagingScript.py" "${TB_OFFICIAL_NAME}" "${TB_PROJECT_NAME}" "${TB_MAIN_TARGET_NAME}" "${TB_APPIMAGE_DIR}" "${TB_INSTALL_PREFIX}" "${TB_VERSION}"
+		)
+	]])
+endif()
+endif()

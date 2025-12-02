@@ -1,8 +1,8 @@
 #include "WindowsDefs.h"
-#include <windows.h>
 #include <iostream>
 
 #ifdef OS_WINDOWS
+#include <windows.h>
 
 
 void winf_setupConsole(){
@@ -16,6 +16,10 @@ void winf_setupConsole(){
         // optional: sync C++ streams
         std::ios::sync_with_stdio();
     }
+}
+
+void winf_setupConsoleEncoding(){
+    SetConsoleOutputCP(CP_UTF8);
 }
 
 #endif
