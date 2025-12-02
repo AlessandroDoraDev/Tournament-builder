@@ -23,8 +23,8 @@ class CoreAlgorithmPerformance: public testing::TestWithParam<
         >>{};
 
 const std::string base_dir=std::filesystem::current_path().string()+"/assets";
-const std::string dummy_csv_path=base_dir+"/CorrettoOlly.csv";
-const std::string dummy_rank_csv_path=base_dir+"/CorrettoOlly_rank.csv";
+const std::string dummy_csv_path=base_dir+"/T1.csv";
+const std::string dummy_rank_csv_path=base_dir+"/T1_rank.csv";
 
 TEST_P(CoreAlgorithmPerformance, PerfTest){
     std::string csv_path=std::get<0>(GetParam());
@@ -53,7 +53,6 @@ TEST_P(CoreAlgorithmPerformance, PerfTest){
     std::chrono::duration elapsed= timeThis([&](){
         deduceAndApplyMoves(config, rotation_size);
     });
-    //std::cout<<(std::string)TournamentConfig(config, player_list);
     std::chrono::nanoseconds expected=std::get<2>(GetParam());
     EXPECT_LE(elapsed, expected)<<elapsed<<" >= "<< expected;
 }
@@ -106,11 +105,9 @@ TEST_P(CoreAlgorithmDummy, DummyTest){
     Config config=Config(n_teams, n_players);
     ASSERT_EQ(config.init(player_list), true)
         <<"Player list doesn't fit the teams' sizes... player list size: "<<player_list.size();
-    std::chrono::duration elapsed= timeThis([&](){
-        deduceAndApplyMoves(config, rotation_size);
-    });
-    //std::cout<<(std::string)TournamentConfig(config, player_list);
-    EXPECT_EQ(true, true)<<"like... how did this fail?";
+    deduceAndApplyMoves(config, rotation_size);
+    TournamentConfig t_config(config, player_list);
+    EXPECT_LE(t_config.quality(), 0.2)<<"The resulting quality is higher than the best achievable.";
 }
 
 
@@ -121,22 +118,22 @@ INSTANTIATE_TEST_SUITE_P(
         std::make_tuple(dummy_csv_path, dummy_rank_csv_path, 5, 3),
         std::make_tuple(
             dummy_csv_path, 
-            base_dir+"/CorrettoOlly_rank_v2.csv", 
+            base_dir+"/T1_rank_v2.csv", 
             5, 3
         ),
         std::make_tuple(
-            base_dir+"/Torneo_itsme_-_Edizione_1.csv",
-            base_dir+"/Itsme_Ed1_rank.csv", 
+            base_dir+"/T2.csv",
+            base_dir+"/T2_rank.csv", 
             5, 3
         ),
         std::make_tuple(
-            base_dir+"/Torneo_itsme_-_Edizione_2_polished.csv",
-            base_dir+"/Itsme_Ed2_rank.csv", 
+            base_dir+"/T3_polished.csv",
+            base_dir+"/T3_rank.csv", 
             5, 3
         ),
         std::make_tuple(
-            base_dir+"/Torneo_itsme_-_Edizione_2_mod.csv",
-            base_dir+"/Itsme_Ed2_mod_rank.csv", 
+            base_dir+"/T3_mod.csv",
+            base_dir+"/T3_mod_rank.csv", 
             5, 3
         )
     )

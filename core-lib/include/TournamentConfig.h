@@ -30,6 +30,7 @@ public:
     std::size_t nRows(){return m_n_rows;}
     std::size_t nCols(){return m_n_cols;}
     std::size_t matrixSize(){return m_config.size();}
+    double quality();
 private:
     std::vector<Player> m_config;
     std::size_t m_n_rows;

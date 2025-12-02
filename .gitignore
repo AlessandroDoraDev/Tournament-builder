@@ -1,6 +1,5 @@
 .vscode/
 out/
 program_outputs/
-assets/
 *.log
 notes/

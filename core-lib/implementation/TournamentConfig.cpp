@@ -50,6 +50,30 @@ TournamentConfig::operator std::string(){
     return res;
 }
 
+double TournamentConfig::quality(){
+    double max_pnts=0;
+    double min_pnts=0;
+    for(int i=0; i<m_n_rows; i++){
+        int team_pnts=0;
+        for(int j=0; j<m_n_cols; j++){
+            const Player& p= m_config[i*m_n_cols+j];
+            team_pnts+=static_cast<int>(p.rank);
+        }
+        if(max_pnts==0){
+            max_pnts=team_pnts;
+            min_pnts=team_pnts;
+        }else{ 
+            if(max_pnts<team_pnts){
+                max_pnts=team_pnts;
+            }
+            if(min_pnts>team_pnts){
+                min_pnts=team_pnts;
+            }
+        }
+    }
+    return (max_pnts-min_pnts)/m_n_cols;
+}
+
 
 void TournamentConfig::genHTMLTable(std::string path){
     static constexpr std::string_view style_settings=R"(
