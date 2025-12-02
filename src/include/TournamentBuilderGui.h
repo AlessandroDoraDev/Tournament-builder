@@ -25,11 +25,15 @@ namespace SmallGui{
 #if defined(OS_LINUX) && defined(APPIMAGE_BUILD)
     const std::regex ICONS_FOLDER_PATTERN(R"(^\d+x\d+$)");
 #endif
+#ifndef OS_WINDOWS
     std::filesystem::path iconsPath();
     const std::regex icon_pattern(R"(^icon\d+x\d+\.png$)");
+#endif
     void render(GLFWwindow* window);
     std::pair<std::string, std::string> playerToCellString(const Player&);
-    ::std::vector<::std::filesystem::path> listMatchingFiles(const ::std::filesystem::path& dir, const ::std::regex& pattern);
     bool browseCSVInteraction(GLFWwindow* window, std::string* dest, const std::string& defaultPath);
     bool browseFolderInteraction(GLFWwindow* window, std::string* dest, const std::string& defaultPath);
+#ifndef OS_WINDOWS
+    ::std::vector<::std::filesystem::path> listMatchingFiles(const ::std::filesystem::path& dir, const ::std::regex& pattern);
+#endif
 };

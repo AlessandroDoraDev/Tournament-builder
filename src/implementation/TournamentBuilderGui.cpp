@@ -45,7 +45,7 @@ static void glfw_error_callback(int error, const char* description){
 
 std::filesystem::path SmallGui::iconsPath(){return APPDIR/"../share/icons/hicolor/";}
 
-#else
+#elifndef OS_WINDOWS
 
 std::filesystem::path SmallGui::iconsPath(){return "icons/";}
 
@@ -87,6 +87,8 @@ void mainGui(){
     if (window == nullptr)
         return;
     
+
+#ifndef  OS_WINDOWS
     std::vector<std::filesystem::path> icon_paths=SmallGui::listMatchingFiles(SmallGui::iconsPath(), SmallGui::icon_pattern);
     std::vector<GLFWimage> icons;
     icons.reserve(icon_paths.size());
@@ -102,7 +104,8 @@ void mainGui(){
             std::println("Problem loading icon: {}, {}", path.string(), stbi_failure_reason());
         }
     }
-    
+#endif    
+
     glfwMakeContextCurrent(window);
     glfwSwapInterval(1); // Enable vsync
 
@@ -123,12 +126,15 @@ void mainGui(){
             }
         }
     });
+
     
+#ifndef  OS_WINDOWS
     glfwSetWindowIcon(window, icons.size(), icons.data());
     
     for(GLFWimage& icon: icons){
         stbi_image_free(icon.pixels);
     }
+#endif
 
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
@@ -354,7 +360,7 @@ std::pair<std::string, std::string> SmallGui::playerToCellString(const Player& p
     return std::make_pair(p.name, ENUM_RANK_TO_STRING_MAP.at(p.rank));
 }
 
-
+#ifndef OS_WINDOWS
 std::vector<std::filesystem::path> 
 SmallGui::listMatchingFiles(const std::filesystem::path& dir, const std::regex& pattern){
     std::vector<std::filesystem::path> results;
@@ -383,7 +389,7 @@ SmallGui::listMatchingFiles(const std::filesystem::path& dir, const std::regex& 
 
     return results;
 }
-
+#endif
 
 bool SmallGui::browseCSVInteraction(GLFWwindow* window, std::string* dest, const std::string& defaultPath){
     bool res=true;

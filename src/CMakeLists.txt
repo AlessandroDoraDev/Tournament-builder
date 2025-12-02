@@ -1,10 +1,21 @@
-add_executable(${TB_MAIN_TARGET_NAME} WIN32
-    implementation/main_noiaFattaBene.cpp
+set(TB_MAIN_SOURCES 
+    implementation/main.cpp
     implementation/TournamentBuilderGui.cpp
     implementation/WindowsDefs.cpp
     implementation/appImgDefs.cpp
 )
 
+if(TB_PLATFORM STREQUAL WINDOWS)
+
+enable_language(RC)
+list(APPEND TB_MAIN_SOURCES ../icons/icon.rc)
+
+endif()
+
+
+add_executable(${TB_MAIN_TARGET_NAME} WIN32
+    ${TB_MAIN_SOURCES}
+)
 
 target_compile_definitions(${TB_MAIN_TARGET_NAME} PRIVATE 
     $<$<CONFIG:Debug>:DEBUG>
@@ -20,7 +31,7 @@ endif()
 
 set_target_properties(${TB_MAIN_TARGET_NAME} PROPERTIES LINK_DEPENDS_NO_SHARED TRUE)
 
-if(${TB_CURRENT_COMPILER} STREQUAL COMPILER_MSVC)
+if(TB_CURRENT_COMPILER STREQUAL COMPILER_MSVC)
     target_link_options(${TB_MAIN_TARGET_NAME} PRIVATE "/SUBSYSTEM:WINDOWS" "/ENTRY:mainCRTStartup")
 endif()
 
@@ -44,7 +55,7 @@ target_link_libraries(${TB_MAIN_TARGET_NAME} PRIVATE
 
 
 
-if(${TB_PLATFORM} STREQUAL WINDOWS)
+if(TB_PLATFORM STREQUAL WINDOWS)
     target_link_libraries(${TB_MAIN_TARGET_NAME} PRIVATE
         ole32
         uuid

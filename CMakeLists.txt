@@ -1,4 +1,6 @@
 cmake_minimum_required(VERSION 3.20)
+cmake_policy(SET CMP0091 NEW)
+
 
 set(TB_PROJECT_NAME tournament-builder)
 project(${TB_PROJECT_NAME} LANGUAGES C CXX)
@@ -71,20 +73,30 @@ endif()
 set(TB_CURRENT_COMPILER Undefined)
 if(MSVC)
 	set(TB_CURRENT_COMPILER COMPILER_MSVC)
+	set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+	set(ABSL_MSVC_STATIC_RUNTIME 
+		ON CACHE BOOL 
+		"Link ABSL static runtime libraries"
+	)
+	set(USE_MSVC_RUNTIME_LIBRARY_DLL
+		OFF CACHE BOOL 
+		"Link GLFW static runtime libraries"
+	)
 endif()
 
 
-if(${TB_PLATFORM} STREQUAL MACOSX)
+if(TB_PLATFORM STREQUAL MACOSX)
 	set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -L/usr/local/opt/llvm/lib/c++ -L/usr/local/opt/llvm/lib/unwind -lunwind")
 	set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -L/usr/local/opt/llvm/lib/c++ -L/usr/local/opt/llvm/lib/unwind -lunwind")
 	enable_language(OBJC)
 	enable_language(OBJCXX)
 endif()
 
-add_subdirectory(${TB_LIBS_DIR})
-add_subdirectory(${TB_CORELIB_DIR})
+add_subdirectory(${TB_LIBS_DIR} EXCLUDE_FROM_ALL)
+add_subdirectory(${TB_CORELIB_DIR} EXCLUDE_FROM_ALL)
 add_subdirectory(src)
 add_subdirectory(${TB_TEST_DIR})
+
 
 
 ##################################################################################################
@@ -110,13 +122,8 @@ foreach(TB_FILE_NAME ${TB_ICON_FILE_NAMES})
 endforeach()
 
 
-if(NOT ${CMAKE_BUILD_TYPE} STREQUAL Release)
-	install(CODE [[
-		message(STATUS "Installation is setup to only work in Release mode. Be sure to set it.")
-	]])
-endif()
-if(${TB_PLATFORM} STREQUAL LINUX) 
-if(${CMAKE_BUILD_TYPE} STREQUAL Release)
+
+if(TB_PLATFORM STREQUAL LINUX) 
 	set(TB_APPIMAGE_DIR "${CMAKE_INSTALL_PREFIX}/${TB_OFFICIAL_NAME}.AppDir")
 
 	install(CODE "
@@ -154,5 +161,29 @@ if(${CMAKE_BUILD_TYPE} STREQUAL Release)
 			COMMAND python3 "${TB_MAIN_DIR}/LinuxPackagingScript.py" "${TB_OFFICIAL_NAME}" "${TB_PROJECT_NAME}" "${TB_MAIN_TARGET_NAME}" "${TB_APPIMAGE_DIR}" "${TB_INSTALL_PREFIX}" "${TB_VERSION}"
 		)
 	]])
+	
 endif()
+
+if(TB_PLATFORM STREQUAL WINDOWS)
+	install(TARGETS ${TB_MAIN_TARGET_NAME}
+		RUNTIME DESTINATION bin
+		CONFIGURATIONS Release
+	)
+	install(FILES README.md LICENSE
+		DESTINATION .
+	)
 endif()
+
+set(CPACK_PACKAGE_NAME "${TB_PROJECT_NAME}")
+set(CPACK_PACKAGE_VERSION_MAJOR "${TB_MAIN_VERSION}")
+set(CPACK_PACKAGE_VERSION_MINOR "${TB_RELEASE_VERSION}")
+set(CPACK_PACKAGE_VERSION_PATCH "${TB_PATCH_VERSION}")
+set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_CURRENT_SOURCE_DIR}/LICENSE")
+set(CPACK_GENERATOR "ZIP")
+set(CPACK_PACKAGE_EXECUTABLES "tournament-builder;Tournament builder")
+set(CPACK_PACKAGE_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/out/packages")
+set(CPACK_PACKAGE_VENDOR "io.github.AlessandroDoraDev")
+set(CPACK_PACKAGE_DESCRIPTION_SUMMARY )
+set(CPACK_PACKAGE_ICON)
+
+include(CPack)

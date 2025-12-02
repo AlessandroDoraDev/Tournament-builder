@@ -15,13 +15,6 @@ target_compile_definitions(${TB_CORELIB_TARGET_NAME} PRIVATE
 	$<$<CONFIG:Release>:NDEBUG>
 )
 
-if (${TB_CURRENT_COMPILER} STREQUAL COMPILER_MSVC)
-add_link_options(
-	$<$<CONFIG:Debug>:/INCREMENTAL> 
-	$<$<NOT:$<CONFIG:Debug>>:/INCREMENTAL:NO>
-)
-endif()
-
 set_target_properties(${TB_CORELIB_TARGET_NAME} PROPERTIES LINK_DEPENDS_NO_SHARED TRUE)
 
 target_include_directories(${TB_CORELIB_TARGET_NAME} PRIVATE 
