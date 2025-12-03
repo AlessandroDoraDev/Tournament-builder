@@ -12,6 +12,14 @@ set(TB_RELEASE_VERSION 0)
 set(TB_PATCH_VERSION 0)
 set(TB_VERSION ${TB_MAIN_VERSION}.${TB_RELEASE_VERSION}.${TB_PATCH_VERSION})
 
+set(TB_PROJECT_SUMMARY [[\
+Tournament builder is a simple desktop application that produces a set of teams, given a list of people (with their associated skill level) and a list of all the possible skill levels allowed.
+
+It was originally made in the context of tournament organization, but its algorithm can be applied in any similar situation that requires to group a set number of weighted resources evenly.
+]])
+
+set(TB_DEV_NAME "io.github.alessandrodoradev")
+
 set(CMAKE_OSX_DEPLOYMENT_TARGET "11.0" CACHE STRING "Minimum OS X deployment version")
 
 set(TB_OFFICIAL_NAME "${TB_PROJECT_NAME}-${TB_VERSION}")
@@ -133,7 +141,9 @@ if(TB_PLATFORM STREQUAL LINUX)
 		set(TB_PROJECT_NAME \"${TB_PROJECT_NAME}\")\n
 		set(TB_INSTALL_PREFIX \"${CMAKE_INSTALL_PREFIX}\")\n
 		set(TB_MAIN_DIR \"${CMAKE_CURRENT_SOURCE_DIR}\")\n
-		set(TB_VERSION \"${TB_VERSION}\")		
+		set(TB_VERSION \"${TB_VERSION}\")\n
+		set(TB_PROJECT_SUMMARY \"${TB_PROJECT_SUMMARY}\")\n
+		set(TB_DEV_NAME \"${TB_DEV_NAME}\")
 	")
 
 	install(TARGETS ${TB_MAIN_TARGET_NAME}
@@ -156,9 +166,9 @@ if(TB_PLATFORM STREQUAL LINUX)
 		DESTINATION "${TB_APPIMAGE_DIR}/"
 	)
 	install(CODE [[
-		message(STATUS "executing python3 \"${TB_MAIN_DIR}/LinuxPackagingScript.py\" \"${TB_OFFICIAL_NAME}\" \"${TB_PROJECT_NAME}\" \"${TB_MAIN_TARGET_NAME}\" \"${TB_APPIMAGE_DIR}\" \"${TB_INSTALL_PREFIX}\" \"${TB_VERSION}\"")
+		message(STATUS "executing python3 \"${TB_MAIN_DIR}/LinuxPackagingScript.py\" \"${TB_OFFICIAL_NAME}\" \"${TB_PROJECT_NAME}\" \"${TB_MAIN_TARGET_NAME}\" \"${TB_APPIMAGE_DIR}\" \"${TB_INSTALL_PREFIX}\" \"${TB_VERSION}\", \"${TB_DEV_NAME}\" \"${TB_PROJECT_SUMMARY}\"")
 		execute_process(
-			COMMAND python3 "${TB_MAIN_DIR}/LinuxPackagingScript.py" "${TB_OFFICIAL_NAME}" "${TB_PROJECT_NAME}" "${TB_MAIN_TARGET_NAME}" "${TB_APPIMAGE_DIR}" "${TB_INSTALL_PREFIX}" "${TB_VERSION}"
+			COMMAND python3 "${TB_MAIN_DIR}/LinuxPackagingScript.py" "${TB_OFFICIAL_NAME}" "${TB_PROJECT_NAME}" "${TB_MAIN_TARGET_NAME}" "${TB_APPIMAGE_DIR}" "${TB_INSTALL_PREFIX}" "${TB_VERSION}" "${TB_DEV_NAME}" "${TB_PROJECT_SUMMARY}"
 		)
 	]])
 	
@@ -174,6 +184,8 @@ if(TB_PLATFORM STREQUAL WINDOWS)
 	)
 endif()
 
+
+
 set(CPACK_PACKAGE_NAME "${TB_PROJECT_NAME}")
 set(CPACK_PACKAGE_VERSION_MAJOR "${TB_MAIN_VERSION}")
 set(CPACK_PACKAGE_VERSION_MINOR "${TB_RELEASE_VERSION}")
@@ -182,8 +194,8 @@ set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_CURRENT_SOURCE_DIR}/LICENSE")
 set(CPACK_GENERATOR "ZIP")
 set(CPACK_PACKAGE_EXECUTABLES "tournament-builder;Tournament builder")
 set(CPACK_PACKAGE_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/out/packages")
-set(CPACK_PACKAGE_VENDOR "io.github.AlessandroDoraDev")
-set(CPACK_PACKAGE_DESCRIPTION_SUMMARY )
-set(CPACK_PACKAGE_ICON)
+set(CPACK_PACKAGE_VENDOR "${TB_DEV_NAME}")
+set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "${TB_PROJECT_SUMMARY}")
+set(CPACK_PACKAGE_ICON "icons/icon512x512.png")
 
 include(CPack)

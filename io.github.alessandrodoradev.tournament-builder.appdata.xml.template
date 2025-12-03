@@ -6,10 +6,7 @@
 	<name>Tournament builder</name>
 	<summary>Create your tournament with balanced teams</summary>
 	<description>
-		<p>Tournament builder is a simple desktop application that produces a set of teams, given a list of people (with their associated skill level) and a list of all the possible skill levels allowed.
-
-It was originally made in the context of tournament organization, but its algorithm can be applied in any similar situation that requires to group a set number of weighted resources evenly.
-</p>
+		<p>{}</p>
 	</description>
 	<launchable type="desktop-id">{}.desktop</launchable>
 	<url type="homepage">https://github.com/AlessandroDoraDev</url>
@@ -22,7 +19,7 @@ It was originally made in the context of tournament organization, but its algori
 	<provides>
 		<id>{}.desktop</id>
 	</provides>
-	<developer id="io.github.alessandrodoradev">
+	<developer id="{}">
 		<name>Tournament-builder</name>
 		<url type="homepage">https://github.com/AlessandroDoraDev</url>
 	</developer>

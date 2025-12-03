@@ -127,13 +127,5 @@
             "configurePreset": "MacOS_ConfigPresetRelease",
             "configuration": "Release"
         }
-    ],
-    "packagePresets": [
-        {
-            "name": "WinPackaging",
-            "description": "",
-            "displayName": "",
-            "configurePreset": "MSVC_ConfigPreset"
-        }
     ]
 }

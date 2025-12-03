@@ -13,7 +13,9 @@ ARGS={
 "MAIN_TARGET_NAME": 3,
 "APPDIR_PATH": 4,
 "INSTALL_PREFIX": 5,
-"VERSION": 6
+"VERSION": 6,
+"DEV_NAME": 7,
+"PROJECT_SUMMARY": 8
 }
 
 DESKTOP_FILE_TEMPLATE="""\
@@ -30,10 +32,20 @@ StartupWMClass={}
 
 LINUX_PAYLOAD_URL="https://github.com/linuxdeploy/linuxdeploy/releases/download/continuous/linuxdeploy-x86_64.AppImage"
 
-def main(official_name: str, project_name: str, main_target_name: str, appdir_path: Path, install_prefix: Path, main_dir_path: Path, version: str) -> None:
+def main(argv: list) -> None:
+    official_name: str= argv[ARGS["OFFICIAL_NAME"]]
+    project_name: str= argv[ARGS["PROJECT_NAME"]]
+    main_target_name: str= argv[ARGS["MAIN_TARGET_NAME"]]
+    appdir_path: Path= Path(argv[ARGS["APPDIR_PATH"]])
+    install_prefix: Path= Path(argv[ARGS["INSTALL_PREFIX"]]) 
+    main_dir_path: Path= Path(argv[ARGS["SCRIPT_PATH"]]).parent
+    version: str= argv[ARGS["VERSION"]]
+    dev_name: str= argv[ARGS["DEV_NAME"]]
+    project_summary: str= argv[ARGS["PROJECT_SUMMARY"]]
+    
     global DESKTOP_FILE_TEMPLATE
     global LINUX_PAYLOAD_URL
-    dev_prefix="io.github.alessandrodoradev."
+    dev_prefix=dev_name+"."
     dst_desktop_path=appdir_path/(dev_prefix+project_name+".desktop")
     if not dst_desktop_path.exists():
         print("Creating desktop file...")
@@ -67,8 +79,10 @@ def main(official_name: str, project_name: str, main_target_name: str, appdir_pa
             metainfo_template_payload=template.read()
             metainfo_template_payload=metainfo_template_payload.format(
                 dev_prefix+project_name,
+                project_summary,
                 dev_prefix+project_name,
                 dev_prefix+project_name,
+                dev_name,
                 version,
                 date.today().strftime("%Y-%m-%d"),
                 version
@@ -93,12 +107,4 @@ if __name__ == "__main__":
     ill_args_msg=f"Missing args, found {argc}, expected {expected_argc}..."
     assert argc==expected_argc, ill_args_msg #script path not counted
 
-    main(
-        sys.argv[ARGS["OFFICIAL_NAME"]], 
-        sys.argv[ARGS["PROJECT_NAME"]], 
-        sys.argv[ARGS["MAIN_TARGET_NAME"]],
-        Path(sys.argv[ARGS["APPDIR_PATH"]]),
-        Path(sys.argv[ARGS["INSTALL_PREFIX"]]),
-        Path(sys.argv[ARGS["SCRIPT_PATH"]]).parent,
-        sys.argv[ARGS["VERSION"]]
-    )
+    main(sys.argv)
