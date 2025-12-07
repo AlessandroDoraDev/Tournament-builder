@@ -7,6 +7,7 @@ add_library(${TB_CORELIB_TARGET_NAME} STATIC
 	implementation/strat.cpp
 	implementation/to_strings.cpp
 	implementation/TournamentBuilderAPI.cpp
+	implementation/Colors.cpp
 )
 
 
