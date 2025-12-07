@@ -71,6 +71,9 @@ int main(int argc, char** argv){
         std::cerr<<"Bad arguments"<<std::endl;
         break;
     }
+
+    win_freeConsole();
+
     return EXIT_SUCCESS;
 }
 
@@ -87,10 +90,10 @@ int cmdExecute(
         return EXIT_FAILURE;
     }else{
         std::cout<<(std::string)res.tournament_config;
-        std::string res_path=
-            (std::filesystem::path(working_directory)
-            /(std::filesystem::path(players_csv_path).stem().string()+".html")).string();
-        res.tournament_config.genHTMLTable(res_path);
+        std::filesystem::path res_path= 
+            std::filesystem::path(working_directory)
+            /(std::filesystem::path(players_csv_path).filename().stem().string()+".html");
+        res.tournament_config.genHTMLTable(res_path.string());
     }
     return EXIT_SUCCESS;
 }

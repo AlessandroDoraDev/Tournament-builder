@@ -1,8 +1,10 @@
 #include "WindowsDefs.h"
-#include <iostream>
 
 #ifdef OS_WINDOWS
+#include <iostream>
+#define NOMINMAX
 #include <windows.h>
+#include <limits>
 
 
 void winf_setupConsole(){
@@ -20,6 +22,16 @@ void winf_setupConsole(){
 
 void winf_setupConsoleEncoding(){
     SetConsoleOutputCP(CP_UTF8);
+}
+
+void winf_freeConsole(){
+    std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+    std::cout.flush();
+    std::cerr.flush();
+    if (!FreeConsole()) {
+        DWORD err = GetLastError();
+        MessageBoxA(nullptr, "FreeConsole failed", "Error", MB_OK);
+    }
 }
 
 #endif

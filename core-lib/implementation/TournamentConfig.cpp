@@ -4,6 +4,10 @@
 #include <ranges>
 #include "globals.h"
 #include <fstream>
+#include "Colors.h"
+#include <functional>
+#include <print>
+#include <algorithm>
 
 TournamentConfig::TournamentConfig(const Config& config, PlayerList p_list)
 : m_n_rows(config.n_rows), m_n_cols(config.n_cols){
@@ -23,13 +27,21 @@ TournamentConfig::operator std::string(){
     std::string res="\n";
     double max_pnts=0;
     double min_pnts=0;
+    PlayerList::iterator max_length_tostring_it= std::max_element(m_config.begin(), m_config.end(),
+        [](const Player& p1, const Player& p2){
+            return to_string(p1).length()<to_string(p2).length();
+        }
+    );
+    std::size_t max_tostring_length= to_string(*max_length_tostring_it).size();
     for(int i=0; i<m_n_rows; i++){
         int team_pnts=0;
         res+="[";
         for(int j=0; j<m_n_cols; j++){
             const Player& p= m_config[i*m_n_cols+j];
             team_pnts+=static_cast<int>(p.rank);
-            res+=std::format("{:<27}", to_string(p))+" | ";
+            std::string fmt= std::format("{{:<{}}} | ", max_tostring_length);
+            std::string tostring_p= to_string(p);
+            res+=std::vformat(fmt, std::make_format_args(tostring_p));
         }
         res+="\b\b] ("
         +round_to_string(((double)team_pnts)/m_n_cols, 1)
@@ -102,40 +114,109 @@ void TournamentConfig::genHTMLTable(std::string path){
             vertical-align: middle;
         }
 
+        td, td *{
+            max-height: 60px !important;
+            align-content: center;
+        }
+        
+        
+        td:nth-child(2n+2){
+            border-right: none;
+        }
+        td:nth-child(2n+3){
+            border-left: none;
+        }
+
         tr {
             background-color: #424242;
         }
-        
+        .square-bg {
+            aspect-ratio: 1;
+            display: grid;
+            place-items: center;
+        }
+        .square-fg{
+            width: 80%;
+            aspect-ratio: 1;
+            display: grid;
+            place-items: center;
+        }
+        .inner-gem {
+            transform: rotate(45deg);
+        }
+        .rank-text{
+            font-weight: bold;
+            color: white;
+            max-height: 10px;
+        }
+        .rank-gem {
+            display:grid; 
+            place-items: center;
+        }
+            
+        .player-name{
+            width:80%;
+        }
         .team-title{
             font-weight: bold;
             text-decoration: underline;
         }
-        )"
-        ;
-    static constexpr std::string_view html_base=
-    R"(<!DOCTYPE html>
-    <html lang="en">
-    <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tournament</title>
-    <style>
-        {}
-    </style>
-    </head>
-    <body>
-    <header>
-        <h1>Matchmaking</h1>
-    </header>
-    <main>
-    {}
-    </main>
-    </body>
-    </html>)";
+    )";
+    static constexpr std::string_view html_base=R"(
+        <!DOCTYPE html>
+        <html lang="en">
+            <head>
+                <meta charset="UTF-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <title>Tournament</title>
+                <style>
+                    {}
+                </style>
+            </head>
+            <body>
+                <header>
+                    <h1>Matchmaking</h1>
+                </header>
+                <main>
+                    {}
+                </main>
+            </body>
+        </html>
+    )";
+    static constexpr std::string_view rank_gem_base=R"(
+        <div class="rank-gem">
+            <div class="square-bg" style="width:100%; max-width:30px; background-color: hsl({}, {}, {});">
+                <div class="square-fg" style="background-color: hsl({}, {}, {});">
+                    <div class="inner-gem square-bg" style="width:100%; background-color: hsl({}, {}, {});">
+                        <div class="square-fg" style="background-color: hsl({}, {}, {});"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="rank-text" style="margin-top: 5px;">
+                {}
+            </div>
+        </div>
+    )";
     static constexpr std::string_view table_base="<table><tbody>{}</tbody></table>";
     static constexpr std::string_view row_base="<tr>{}</tr>";
-    static constexpr std::string_view cell_base="<td>{}<br>{}</td>";
+    static constexpr std::string_view cell_base=R"(
+        <td>
+            <div class="player-name">{}</div>
+        </td>
+        <td>
+            {}
+        </td>
+    )";
     static constexpr std::string_view row_starter="<td class=\"team-title\">TEAM {}</td>";
+    static constexpr double bg_gem_light_increase=0.00;
+    static constexpr double fg_gem_light_increase=0.15;
+    auto [min_r, max_r]= std::minmax_element(STRING_RANK_TO_ENUM_MAP.begin(), STRING_RANK_TO_ENUM_MAP.end(),
+        [](const auto& first_entry, const auto& second_entry){ //std::pair<const std::string, Rank>
+            return first_entry.second<second_entry.second;
+        }
+    );
+    static bool f=true;
+    auto toHTMLPcntg=[](double val){return std::format("{}%", (int64_t)(val*100));};
     std::string out_html;
     std::string table;
     
@@ -144,7 +225,18 @@ void TournamentConfig::genHTMLTable(std::string path){
         std::string cols=std::format(row_starter, i+1);
         for(int j=0; j<m_n_cols; j++){
             const Player& p= m_config[i*m_n_cols+j];
-            cols+=std::format(cell_base, p.name, ENUM_RANK_TO_STRING_MAP[p.rank]);
+            ColorRGB col_rgb= mapValueToGradient(p.rank, min_r->second, max_r->second);
+            ColorHSL col_hue= rgbToHsl(col_rgb);
+            cols+=std::format(cell_base, 
+                p.name, 
+                std::format(rank_gem_base,
+                    col_hue.hue, toHTMLPcntg(col_hue.saturation), toHTMLPcntg(col_hue.lighting+(1*bg_gem_light_increase)),
+                    col_hue.hue, toHTMLPcntg(col_hue.saturation), toHTMLPcntg(col_hue.lighting+(1*fg_gem_light_increase)),
+                    col_hue.hue, toHTMLPcntg(col_hue.saturation), toHTMLPcntg(col_hue.lighting+(1*bg_gem_light_increase)),
+                    col_hue.hue, toHTMLPcntg(col_hue.saturation), toHTMLPcntg(col_hue.lighting+(1*fg_gem_light_increase)),
+                    ENUM_RANK_TO_STRING_MAP[p.rank]
+                )
+            );
         }
         rows+=std::format(row_base, cols);
     }

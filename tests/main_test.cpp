@@ -31,7 +31,7 @@ TEST_P(CoreAlgorithmPerformance, PerfTest){
     std::string ranks_csv_path= std::get<1>(GetParam());
     std::size_t n_players=std::get<3>(GetParam());
     std::size_t rotation_size=std::get<4>(GetParam());
-    setupConsoleEncoding(); //changing windows console decoding to utf8
+    win_setupConsoleEncoding(); //changing windows console decoding to utf8
     std::println("Testing file \"{}\"", csv_path);
     CSVRows rows = readCSV(csv_path);
     ASSERT_NE(rows.size(), 0)
@@ -87,7 +87,7 @@ TEST_P(CoreAlgorithmDummy, DummyTest){
     std::string ranks_csv_path= std::get<1>(GetParam());
     std::size_t n_players=std::get<2>(GetParam());
     std::size_t rotation_size=std::get<3>(GetParam());
-    setupConsoleEncoding(); //changing windows console decoding to utf8
+    win_setupConsoleEncoding(); //changing windows console decoding to utf8
     std::println("Testing file \"{}\"", csv_path);
     CSVRows rows = readCSV(csv_path);
     ASSERT_NE(rows.size(), 0)
@@ -107,6 +107,7 @@ TEST_P(CoreAlgorithmDummy, DummyTest){
         <<"Player list doesn't fit the teams' sizes... player list size: "<<player_list.size();
     deduceAndApplyMoves(config, rotation_size);
     TournamentConfig t_config(config, player_list);
+    std::print("{}", (std::string)t_config);
     EXPECT_LE(t_config.quality(), 0.2)<<"The resulting quality is higher than the best achievable.";
 }
 
