@@ -23,7 +23,7 @@ int parsePlayersAndRanks(
 );
 
 enum Args: std::size_t{
-    PLAYERS_CSV_PATH,
+    PLAYERS_CSV_PATH=1,
     RANKS_CSV_PATH,
     N_PLAYERS,
     ROTATION_SIZE,
@@ -87,7 +87,10 @@ int cmdExecute(
         return EXIT_FAILURE;
     }else{
         std::cout<<(std::string)res.tournament_config;
-        res.tournament_config.genHTMLTable(working_directory.data());
+        std::string res_path=
+            (std::filesystem::path(working_directory)
+            /(std::filesystem::path(players_csv_path).stem().string()+".html")).string();
+        res.tournament_config.genHTMLTable(res_path);
     }
     return EXIT_SUCCESS;
 }
@@ -104,7 +107,7 @@ int parsePlayersAndRanks(
         n_players
     );
     if(n_players_res.ec==std::errc::invalid_argument || n_players_res.ec==std::errc::result_out_of_range){
-        std::cerr<<"Number of rotations badly parsed"<<std::endl;
+        std::cerr<<"Number of players badly parsed: \""<<p_str<<"\""<<std::endl;
         return EXIT_FAILURE;
     }
     auto rotation_size_res=std::from_chars(
@@ -113,7 +116,7 @@ int parsePlayersAndRanks(
         rotation_size
     );
     if(rotation_size_res.ec==std::errc::invalid_argument || rotation_size_res.ec==std::errc::result_out_of_range){
-        std::cerr<<"Number of rotations badly parsed"<<std::endl;
+        std::cerr<<"Number of rotations badly parsed: \""<<r_str<<"\""<<std::endl;
         return EXIT_FAILURE;
     }
     return EXIT_SUCCESS;

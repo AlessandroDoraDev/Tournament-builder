@@ -20,16 +20,16 @@ TournamentConfig::TournamentConfig(const Config& config, PlayerList p_list)
 }
 
 TournamentConfig::operator std::string(){
-    std::string res="";
+    std::string res="\n";
     double max_pnts=0;
     double min_pnts=0;
     for(int i=0; i<m_n_rows; i++){
         int team_pnts=0;
-        res+="[\n";
+        res+="[";
         for(int j=0; j<m_n_cols; j++){
             const Player& p= m_config[i*m_n_cols+j];
             team_pnts+=static_cast<int>(p.rank);
-            res+=std::format("{:<25}", to_string(p))+"\n";
+            res+=std::format("{:<27}", to_string(p))+" | ";
         }
         res+="\b\b] ("
         +round_to_string(((double)team_pnts)/m_n_cols, 1)
@@ -103,8 +103,15 @@ void TournamentConfig::genHTMLTable(std::string path){
         }
 
         tr {
-        background-color: #424242;
-        })";
+            background-color: #424242;
+        }
+        
+        .team-title{
+            font-weight: bold;
+            text-decoration: underline;
+        }
+        )"
+        ;
     static constexpr std::string_view html_base=
     R"(<!DOCTYPE html>
     <html lang="en">
@@ -118,7 +125,7 @@ void TournamentConfig::genHTMLTable(std::string path){
     </head>
     <body>
     <header>
-        <h1>My Table Header</h1>
+        <h1>Matchmaking</h1>
     </header>
     <main>
     {}
@@ -128,12 +135,13 @@ void TournamentConfig::genHTMLTable(std::string path){
     static constexpr std::string_view table_base="<table><tbody>{}</tbody></table>";
     static constexpr std::string_view row_base="<tr>{}</tr>";
     static constexpr std::string_view cell_base="<td>{}<br>{}</td>";
+    static constexpr std::string_view row_starter="<td class=\"team-title\">TEAM {}</td>";
     std::string out_html;
     std::string table;
     
     std::string rows;
     for(int i=0; i<m_n_rows; i++){
-        std::string cols;
+        std::string cols=std::format(row_starter, i+1);
         for(int j=0; j<m_n_cols; j++){
             const Player& p= m_config[i*m_n_cols+j];
             cols+=std::format(cell_base, p.name, ENUM_RANK_TO_STRING_MAP[p.rank]);
